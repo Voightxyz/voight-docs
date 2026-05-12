@@ -1,94 +1,102 @@
 ---
 title: Quickstart
-description: "Wire Voight into Claude Code in 30 seconds."
+description: "Get events from your agent into the Voight dashboard in 30 seconds."
 ---
 
-This quickstart wires the Voight SDK into Claude Code — the most common path. If you're integrating with Cursor, Codex, or building autonomous agents, see [Library mode](/sdk/library-mode) or the [HTTP API](/sdk/http-api) instead.
-
-## Prerequisites
-
-- [Claude Code](https://docs.claude.com/en/docs/claude-code) installed and working
-- A Voight account at [voight.xyz/dashboard](https://voight.xyz/dashboard) (sign in with Google, X, or a Solana wallet via Privy)
+Voight works with any agent stack — coding assistants, autonomous frameworks, and custom runtimes. Pick the install path that fits yours; the dashboard, the privacy model, and the API are the same on every path.
 
 ## Step 1 — Generate an API key
 
 Open [voight.xyz/dashboard/settings](https://voight.xyz/dashboard/settings) and click **+ Generate key**. Copy the `vk_...` secret. **You'll only see it once** — save it to a password manager.
 
-## Step 2 — Run the setup wizard
+## Step 2 — Pick your install path
 
-In your terminal (or in any Claude Code chat — the wizard works both ways):
+### A · Coding agent (Claude Code, Cursor, Codex…)
+
+A wizard writes the right hooks and env into your IDE's config. No code changes.
 
 ```bash
 npx -y @voightxyz/sdk setup
 ```
 
-The wizard walks you through:
+It asks for a [privacy level](/privacy/overview), accepts your API key, and wires up the lifecycle hooks. Idempotent — safe to re-run.
 
-<Steps>
-  <Step title="Pick a privacy level">
-    Three options. Read the [privacy overview](/privacy/overview) for the full breakdown.
+Verified today for **Claude Code**. Cursor and Codex targets are scaffolded — see [SDK targets](/sdk/library-mode#verified-vs-scaffolded-targets).
 
-    - **1) Minimal** — metadata only (tool names, timing, tokens, USD). No prompts, responses, file paths, cwd, git context leave your machine.
-    - **2) Standard** ★ — full content with local PII scrubbing. Credentials and personal info redacted on your machine before transmission.
-    - **3) Full** — everything captured as-is.
-  </Step>
-  <Step title="Paste your API key">
-    The wizard validates the `vk_` prefix and stores it in `~/.claude/settings.json` under `env.VOIGHT_KEY`.
-  </Step>
-  <Step title="Done">
-    The wizard wires up 7 Claude Code hooks (PreToolUse, PostToolUse, UserPromptSubmit, Stop, etc.) idempotently. You'll see:
+### B · Autonomous agent (ElizaOS, Solana Agent Kit, custom)
 
-    ```
-    🎉 You're all set!
+Install the SDK as a library and call `voight.log()` from your agent code.
 
-      ✓ Standard mode enabled
-      ✓ 7 hooks wired into Claude Code
-      ✓ API key configured
+```bash
+npm install @voightxyz/sdk
+```
 
-      → See your agent live: https://voight.xyz/dashboard
-    ```
-  </Step>
-</Steps>
+```ts
+import { voight } from '@voightxyz/sdk'
 
-## Step 3 — Trigger your first event
+voight.init({ key: process.env.VOIGHT_KEY })
 
-Open Claude Code (or start a new chat session). Ask it to do anything — run a Bash command, read a file, edit code. Within seconds, the event will appear at [voight.xyz/dashboard](https://voight.xyz/dashboard) in the live timeline.
+await voight.log({
+  kind: 'decision',
+  agentId: 'my-trading-bot',
+  input: 'should I rebalance?',
+  metadata: { confidence: 0.82 },
+})
+```
 
-## Step 4 — Verify in the dashboard
+Full reference in [Library mode](/sdk/library-mode).
 
-You should see:
+### C · Any language over HTTP
 
-- A new agent in the **Agents** list (`claude-code:<your-project>` or your cuid if you renamed)
+If your runtime isn't Node — Python, Go, Rust, anything that speaks JSON — POST events directly. No SDK required.
+
+```bash
+curl https://voight-production.up.railway.app/v1/events \
+  -H "authorization: Bearer $VOIGHT_KEY" \
+  -H "content-type: application/json" \
+  -d '{
+    "kind": "decision",
+    "agentId": "my-agent",
+    "input": "hello world"
+  }'
+```
+
+Full schema in the [HTTP API reference](/api-reference/events).
+
+## Step 3 — Verify in the dashboard
+
+Open [voight.xyz/dashboard](https://voight.xyz/dashboard). Within seconds you should see:
+
+- A new agent in the **Agents** list (auto-named from your install path, renameable)
 - Events streaming in the **Overview** and **Audit log**
 - Token counts, cost USD, and model tags on each event
 - A per-event privacy chip (`MIN` / `STD` / `FULL`) confirming which level captured it
 
-## Non-TTY install (Claude Code chat, CI, agents)
+## Non-TTY install for path A
 
-If `stdin` isn't a TTY (running inside Claude Code chat, CI, or any non-interactive shell), the wizard runs in **3-step progressive mode**:
+If `stdin` isn't an interactive TTY (running the wizard from inside a chat agent, CI, or any non-interactive shell), the setup runs in **3-step progressive mode**:
 
 ```bash
 # Step 1 — see the menu
 npx -y @voightxyz/sdk setup
 
-# Step 2 — pick a level
+# Step 2 — pick a privacy level
 npx -y @voightxyz/sdk setup --privacy=2
 
 # Step 3 — paste your key
 npx -y @voightxyz/sdk setup --privacy=2 --key=vk_YOUR_KEY
 ```
 
-Each step prints clear instructions and exits. The flow chains naturally for both humans and AI agents reading the output.
+Each step prints instructions and exits cleanly. Chains naturally for both humans and AI agents reading the output.
 
 ## Troubleshooting
 
 <AccordionGroup>
   <Accordion title="Events aren't showing up">
     1. Confirm the SDK version: `npx -y @voightxyz/sdk@latest --version` (should be 0.4.2 or higher).
-    2. Check `~/.claude/settings.json` — `env.VOIGHT_KEY` should be set and `hooks` should have entries calling `npx -y @voightxyz/sdk hook`.
-    3. **Restart Claude Code** (or open a fresh chat). The hook subprocess only reads settings on startup.
-    4. In Claude Code, run any tool (e.g. `Bash $ ls`). The PostToolUse hook fires after every tool call.
-    5. Check the dashboard's **Audit log** for the most recent events — they should appear within ~2 seconds.
+    2. For path A — check your IDE's settings file (`~/.claude/settings.json` for Claude Code): `env.VOIGHT_KEY` should be set and `hooks` should contain entries calling `npx -y @voightxyz/sdk hook`. **Restart your IDE** afterwards — hooks are read on startup.
+    3. For path B / C — confirm your code is actually calling `voight.log()` or POSTing, and that `VOIGHT_KEY` is set in the runtime environment.
+    4. Check the dashboard's **Audit log** for the most recent events — they should appear within ~2 seconds of being sent.
   </Accordion>
   <Accordion title="npx serves an old SDK version">
     Force the latest with an explicit version:
@@ -104,14 +112,16 @@ Each step prints clear instructions and exits. The flow chains naturally for bot
     ```
   </Accordion>
   <Accordion title="The SDK isn't capturing my prompts">
-    You're probably on Minimal mode. Re-run setup and pick Standard or Full:
+    You're probably on Minimal mode, which strips content fields by design. Re-run setup with Standard or Full:
 
     ```bash
     npx -y @voightxyz/sdk setup --privacy=standard
     ```
+
+    Or for path B / C, pass the level on `voight.init({ privacy: 'standard' })`.
   </Accordion>
-  <Accordion title="Claude Code shows a warning about the package">
-    Claude Code flags unfamiliar packages with `-y` for safety. The two-line copy block in your [dashboard onboarding](https://voight.xyz/dashboard/settings) includes a framing line ("Set up Voight observability here:") that gives Claude Code the intent it needs to skip the warning.
+  <Accordion title="My IDE shows a warning about the package">
+    Some coding agents flag unfamiliar packages installed with `-y` for safety. The two-line copy block in your [dashboard onboarding](https://voight.xyz/dashboard/settings) includes a framing line ("Set up Voight observability here:") that gives the agent the intent it needs to skip the warning.
   </Accordion>
 </AccordionGroup>
 
@@ -125,9 +135,9 @@ Each step prints clear instructions and exits. The flow chains naturally for bot
     The 3-level model in detail, with examples of what each captures.
   </Card>
   <Card title="Library mode" icon="cube" href="/sdk/library-mode">
-    For autonomous agents you build yourself.
+    Deep dive on path B — for autonomous agents you build yourself.
   </Card>
   <Card title="HTTP API" icon="globe" href="/sdk/http-api">
-    For runtimes that don't use npm.
+    Deep dive on path C — for runtimes that don't use npm.
   </Card>
 </CardGroup>
