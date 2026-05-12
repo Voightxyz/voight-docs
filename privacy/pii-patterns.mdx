@@ -79,7 +79,7 @@ This matters because the SDK runs it once per event, but if a downstream layer e
 
 ## Performance
 
-Designed to handle a 2KB event payload in <10ms on a modern laptop. The pattern set is small (~13 regexes), there's no network or filesystem I/O, and the regexes are anchored with word boundaries to avoid catastrophic backtracking.
+Designed to handle a 2KB event payload in under 10ms on a modern laptop. The pattern set is small (~13 regexes), there's no network or filesystem I/O, and the regexes are anchored with word boundaries to avoid catastrophic backtracking.
 
 ## Adding new patterns
 

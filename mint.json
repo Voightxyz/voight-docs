@@ -81,7 +81,6 @@
     {
       "group": "SDK",
       "pages": [
-        "sdk/claude-code",
         "sdk/library-mode",
         "sdk/http-api"
       ]
