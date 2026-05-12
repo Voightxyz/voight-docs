@@ -11,21 +11,23 @@ The function runs a list of regular expressions in deliberate order (most-specif
 
 The pattern set is:
 
-| Name | Pattern (simplified) | Replacement |
-| --- | --- | --- |
-| PEM private key block | `-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----...-----END...` | `[REDACTED-PRIVATE-KEY]` |
-| JWT | `eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}` | `[REDACTED-JWT]` |
-| Anthropic key | `sk-ant-[A-Za-z0-9_-]{40,}` | `[REDACTED-API-KEY]` |
-| OpenAI key | `sk-(proj-)?[A-Za-z0-9_-]{20,}` | `[REDACTED-API-KEY]` |
-| Stripe live | `(sk\|pk)_live_[A-Za-z0-9]{20,}` | `[REDACTED-API-KEY]` |
-| GitHub fine-grained PAT | `github_pat_[A-Za-z0-9_]{20,}` | `[REDACTED-API-KEY]` |
-| GitHub classic PAT | `ghp_[A-Za-z0-9]{36}` | `[REDACTED-API-KEY]` |
-| AWS access key | `AKIA[A-Z0-9]{16}` | `[REDACTED-API-KEY]` |
-| Slack token | `xox[baprs]-[A-Za-z0-9-]{10,}` | `[REDACTED-API-KEY]` |
-| Voight key | `vk_[A-Za-z0-9_-]{32,}` | `[REDACTED-API-KEY]` |
-| Email | `[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}` | `[REDACTED-EMAIL]` |
-| Phone E.164 | `\+\d{10,15}\b` | `[REDACTED-PHONE]` |
-| Credit card | 13–19 digits + Luhn checksum | `[REDACTED-CARD]` |
+| Name | Replacement token |
+| --- | --- |
+| PEM private key block | `[REDACTED-PRIVATE-KEY]` |
+| JWT | `[REDACTED-JWT]` |
+| Anthropic key (`sk-ant-...`) | `[REDACTED-API-KEY]` |
+| OpenAI key (`sk-...` / `sk-proj-...`) | `[REDACTED-API-KEY]` |
+| Stripe live keys (`sk_live_...` / `pk_live_...`) | `[REDACTED-API-KEY]` |
+| GitHub fine-grained PAT (`github_pat_...`) | `[REDACTED-API-KEY]` |
+| GitHub classic PAT (`ghp_...`) | `[REDACTED-API-KEY]` |
+| AWS access key (`AKIA...`) | `[REDACTED-API-KEY]` |
+| Slack token (`xoxb-` / `xoxp-` / `xoxa-`) | `[REDACTED-API-KEY]` |
+| Voight key (`vk_...`) | `[REDACTED-API-KEY]` |
+| Email (`name@host.tld`) | `[REDACTED-EMAIL]` |
+| Phone in E.164 format (`+1234567890`) | `[REDACTED-PHONE]` |
+| Credit card (13–19 digits + Luhn checksum) | `[REDACTED-CARD]` |
+
+The actual regular expressions (with character classes and quantifiers) live in the SDK source — view them at [`voight-sdk/src/privacy.ts`](https://github.com/Voightxyz/voight-sdk/blob/main/src/privacy.ts).
 
 ## Examples
 

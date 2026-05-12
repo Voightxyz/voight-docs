@@ -32,11 +32,27 @@ Most observability tools (Sentry, Datadog, LangSmith) capture everything by defa
   </Card>
 </CardGroup>
 
-## What stays the same across all 3 levels
+## What's captured at each level
 
-Token counts, USD spend, model names, latency stats, outcomes, tool names — **these are numeric or tag data and pass through every level unchanged**. The dashboard's KPIs and charts work identically regardless of which level you pick.
+| Category | Minimal | Standard | Full |
+| --- | :---: | :---: | :---: |
+| Tool names | ✓ | ✓ | ✓ |
+| Tokens (counts) | ✓ | ✓ | ✓ |
+| USD spend | ✓ | ✓ | ✓ |
+| Model name | ✓ | ✓ | ✓ |
+| Outcome / duration | ✓ | ✓ | ✓ |
+| Throughput / charts | ✓ | ✓ | ✓ |
+| Bash commands | ✗ | ✓ scrub | ✓ raw |
+| File paths | ✗ | ✓ scrub | ✓ raw |
+| User prompts | ✗ | ✓ scrub | ✓ raw |
+| Agent responses | ✗ | ✓ scrub | ✓ raw |
+| Thinking blocks | ✗ | ✓ scrub | ✓ raw |
+| Error messages | ✗ | ✓ scrub | ✓ raw |
+| Git branch / remote / sha | ✗ | ✓ | ✓ |
+| Cwd path | ✗ | ✓ | ✓ |
+| API keys / secrets | n/a | ✗ scrubbed | ⚠️ raw |
 
-This is deliberate: privacy controls shouldn't break observability for the metrics that matter most.
+**Token counts, USD spend, model names, latency, outcomes, and tool names pass through every level unchanged** — these are numeric or tag data with no PII risk. The dashboard's KPIs and charts work identically regardless of which level you pick. Privacy controls shouldn't break observability for the metrics that matter most.
 
 ## How it works under the hood
 

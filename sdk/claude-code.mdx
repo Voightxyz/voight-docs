@@ -53,7 +53,7 @@ For every Claude Code lifecycle event:
 5. Hook maps the event to a Voight payload, scrubs / filters per level, POSTs to `/v1/events`
 6. Hook never throws — failures swallowed so they can't crash Claude Code
 
-The subprocess is short-lived (typically <300ms). It writes diagnostic state to `$TMPDIR/voight-{traces,hooks,tokens,wakeup,git}/`.
+The subprocess is short-lived (typically <300ms). It writes diagnostic state to `$TMPDIR/voight-traces/`, `$TMPDIR/voight-hooks/`, `$TMPDIR/voight-tokens/`, `$TMPDIR/voight-wakeup/`, and `$TMPDIR/voight-git/`.
 
 ## Non-TTY install (chat / CI / agent)
 
