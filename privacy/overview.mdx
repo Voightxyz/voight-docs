@@ -1,0 +1,120 @@
+---
+title: Privacy overview
+description: "The 3-level capture model — pick what leaves your machine."
+---
+
+Most observability tools (Sentry, Datadog, LangSmith) capture everything by default. The operator's database ends up storing your raw prompts, file paths, and accidental credentials. Voight inverts that:
+
+**You choose what leaves your machine. Per-event, the dashboard tells you what was captured.**
+
+## The 3 levels
+
+<CardGroup cols={3}>
+  <Card title="Minimal" icon="lock">
+    Metadata only — tool names, timing, outcomes, token counts, USD cost.
+    No prompts, responses, file paths, cwd, git context.
+
+    **Best for**: regulated workflows, maximum privacy, agents handling
+    sensitive customer data.
+  </Card>
+  <Card title="Standard ★" icon="shield-halved">
+    Everything Full captures, **but every string is run through local
+    PII scrubbing before transmission**. Credentials, emails, JWTs,
+    credit cards, PEM blocks, phone numbers redacted on your machine.
+
+    **Best for**: most developers. The default recommendation.
+  </Card>
+  <Card title="Full" icon="eye">
+    Everything as-is. No filtering. Backwards-compat default for users
+    on SDK ≤0.3.10 who haven't re-run setup.
+
+    **Best for**: solo dev / personal sandbox / max debug detail.
+  </Card>
+</CardGroup>
+
+## What stays the same across all 3 levels
+
+Token counts, USD spend, model names, latency stats, outcomes, tool names — **these are numeric or tag data and pass through every level unchanged**. The dashboard's KPIs and charts work identically regardless of which level you pick.
+
+This is deliberate: privacy controls shouldn't break observability for the metrics that matter most.
+
+## How it works under the hood
+
+The SDK runs the privacy filter **before** the HTTP request leaves your machine:
+
+```
+your IDE → SDK hook subprocess → applyPrivacy(payload, level) → POST /v1/events
+                                       ↑
+                              all the redacting / dropping
+                              happens here, on your computer
+```
+
+Three things happen:
+
+1. **`resolvePrivacyLevel()`** reads `VOIGHT_PRIVACY` env var (set by `settings.json`) and returns one of `minimal | standard | full`. Defaults to `full` if unset (backwards-compat).
+2. **`applyPrivacy(payload, level)`** transforms the event based on the level:
+   - `full` — passthrough + stamp `metadata.privacyLevel: 'full'`
+   - `minimal` — rebuild payload from an allowlist of safe fields (tool name, tokens, outcome, duration), drop everything else
+   - `standard` — deep-walk every string and run [`scrubPii()`](/privacy/pii-patterns) over each
+3. **Every event ships with `metadata.privacyLevel`** so the dashboard can render a per-event chip — your audit trail that scrubbing happened.
+
+The implementation is in [`voight-sdk/src/privacy.ts`](https://github.com/Voightxyz/voight-sdk/blob/main/src/privacy.ts).
+
+## Picking your level
+
+```bash
+npx -y @voightxyz/sdk setup
+```
+
+The wizard prompts you on every install. Switch any time by re-running:
+
+```bash
+npx -y @voightxyz/sdk setup --privacy=minimal
+npx -y @voightxyz/sdk setup --privacy=standard
+npx -y @voightxyz/sdk setup --privacy=full
+```
+
+Or override per-session via env var:
+
+```bash
+VOIGHT_PRIVACY=minimal claude  # or 'standard' / 'full'
+```
+
+The level lives in `~/.claude/settings.json` (`env.VOIGHT_PRIVACY`).
+
+## Per-event chips in the dashboard
+
+Open any event in the dashboard and you'll see a privacy chip next to the event-kind tag:
+
+- `MIN` (green) — metadata-only capture
+- `STD` (blue) — full content + PII scrubbing applied
+- `FULL` (amber) — raw capture
+
+Hover the chip for a tooltip explaining what was kept / dropped / redacted.
+
+Useful when you change your level mid-project: old events keep their original chip, new ones get the new chip. The audit trail is verifiable on each row.
+
+## Honest disclosure
+
+A few things the privacy model **doesn't** do, by design:
+
+- **It doesn't prevent the operator from seeing data once it's transmitted.** Standard mode scrubs PII on your machine, but the operator still receives whatever's left. If that's not acceptable for your use case, pick Minimal.
+- **It doesn't encrypt event content end-to-end.** The transport is TLS to our backend; storage is plaintext in Postgres. End-to-end encryption with user-managed keys is on the [v0.2 enterprise roadmap](/pricing) (`Umbra` integration).
+- **It doesn't enforce server-side quotas yet** — pricing tier limits are advisory today, enforced server-side starting v1.0 when Stripe billing lands.
+
+## Backwards compatibility
+
+Users on SDK ≤0.3.10 default to **Full** (= original behaviour). No silent privacy upgrade — switching levels requires re-running the setup wizard explicitly. We did this deliberately to avoid the trust-eroding "we just scrubbed your API key without telling you" scenario.
+
+Existing settings.json files keep working unchanged. The `VOIGHT_PRIVACY` field is additive.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="PII patterns" icon="list" href="/privacy/pii-patterns">
+    The full list of 12 patterns + Luhn-validated card detection, with examples.
+  </Card>
+  <Card title="Data handling" icon="database" href="/privacy/data-handling">
+    Where data lives, who can access it, retention policies, deletion flow.
+  </Card>
+</CardGroup>

@@ -1,0 +1,117 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "Voight",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg",
+    "href": "https://voight.xyz"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#7be3a0",
+    "light": "#9aeab5",
+    "dark": "#5cc787",
+    "anchors": {
+      "from": "#7be3a0",
+      "to": "#5cc787"
+    },
+    "background": {
+      "dark": "#0a0a0f"
+    }
+  },
+  "theme": "venus",
+  "modeToggle": {
+    "default": "dark"
+  },
+  "font": {
+    "headings": { "family": "Inter" },
+    "body": { "family": "Inter" }
+  },
+  "topbarLinks": [
+    {
+      "name": "Dashboard",
+      "url": "https://voight.xyz/dashboard"
+    },
+    {
+      "name": "Explorer",
+      "url": "https://voight.xyz/explore"
+    }
+  ],
+  "topbarCtaButton": {
+    "name": "Get started",
+    "url": "https://voight.xyz/dashboard"
+  },
+  "anchors": [
+    {
+      "name": "GitHub",
+      "icon": "github",
+      "url": "https://github.com/Voightxyz"
+    },
+    {
+      "name": "npm",
+      "icon": "npm",
+      "url": "https://www.npmjs.com/package/@voightxyz/sdk"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Getting started",
+      "pages": [
+        "introduction",
+        "quickstart"
+      ]
+    },
+    {
+      "group": "Concepts",
+      "pages": [
+        "concepts/agents",
+        "concepts/events",
+        "concepts/traces",
+        "concepts/sessions"
+      ]
+    },
+    {
+      "group": "Privacy & data",
+      "pages": [
+        "privacy/overview",
+        "privacy/pii-patterns",
+        "privacy/data-handling"
+      ]
+    },
+    {
+      "group": "SDK",
+      "pages": [
+        "sdk/claude-code",
+        "sdk/library-mode",
+        "sdk/http-api"
+      ]
+    },
+    {
+      "group": "API reference",
+      "pages": [
+        "api-reference/events",
+        "api-reference/agents",
+        "api-reference/me"
+      ]
+    },
+    {
+      "group": "Resources",
+      "pages": [
+        "pricing",
+        "changelog"
+      ]
+    }
+  ],
+  "footerSocials": {
+    "twitter": "https://x.com/voightxyz",
+    "github": "https://github.com/Voightxyz",
+    "website": "https://voight.xyz"
+  },
+  "feedback": {
+    "thumbsRating": true,
+    "suggestEdit": true
+  },
+  "search": {
+    "prompt": "Search the Voight docs"
+  }
+}

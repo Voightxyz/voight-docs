@@ -1,0 +1,118 @@
+---
+title: Changelog
+description: "What shipped, when."
+---
+
+Voight's SDK is the primary thing devs see — versioning follows [semver](https://semver.org/). Backend + dashboard ship continuously from `main` with no version tag.
+
+## SDK changelog
+
+### 0.4.2 — 2026-05-10
+
+**Fix: explicit `--privacy=N` example in non-TTY welcome menu.**
+
+After 0.4.1 shipped, an alpha tester's friend tried to install via Claude Code chat and the AI agent reading the wizard output didn't know how to chain commands. The welcome menu now includes:
+
+```
+Pick a number (1, 2, or 3) or a name (minimal / standard / full),
+then re-run with that choice as a flag. For example, to pick Standard:
+
+  npx -y @voightxyz/sdk setup --privacy=2
+```
+
+Six lines of code, unblocks the AI-agent install flow.
+
+### 0.4.1 — 2026-05-08
+
+**3-step progressive flow for non-TTY (Claude Code chat).**
+
+The 0.4.0 wizard relied on readline. Inside Claude Code chat (or any non-TTY shell) it silently defaulted to `standard` privacy, never showed the welcome menu, and gave users no way to choose. 0.4.1 reshapes the non-TTY path:
+
+- Step 1 — print welcome + privacy menu, exit
+- Step 2 — accept `--privacy=N`, print API key instructions, exit
+- Step 3 — accept both `--privacy` and `--key`, write settings.json, show done message
+
+Each step prints clear instructions. AI agents in chat can chain them automatically. Also dropped the "Restart Claude Code" line from the done message — Claude Code hot-reloads `settings.json` on most modern versions.
+
+### 0.4.0 — 2026-05-08
+
+**3-level privacy capture + local PII scrubbing.**
+
+The biggest release since the SDK was first published. New capabilities:
+
+- **Three privacy levels** picked at install (Minimal / Standard / Full), via the setup wizard or `VOIGHT_PRIVACY` env var
+- **`scrubPii()`** — 12 PII patterns + Luhn-validated credit cards, run on every string in every event under Standard mode, before the SDK transmits anything
+- **`applyPrivacy(payload, level)`** — single integration point in `hook.ts`, allowlist-based for Minimal (forward-compat), deep-scrub for Standard
+- **Per-event `metadata.privacyLevel` stamp** — every event ships with its level chip so the dashboard can audit retroactively
+- **77 new unit tests** (61 → 138 SDK suite)
+- **E2E verified** against the actual subprocess flow + wire capture, not just unit mocks
+
+See [privacy overview](/privacy/overview) and [PII patterns](/privacy/pii-patterns).
+
+### 0.3.10 — 2026-05-06
+
+**Fix: match real Claude Code rejection phrasing in denial detector.**
+
+The 0.3.9 denial-detection patterns were synthetic. 0.3.10 corrects them against captured rejection logs. **Architectural caveat**: PostToolUse doesn't fire on user_rejected — that path is dead code in production. We're sitting on this until we can capture the right hook flow.
+
+### 0.3.9 — 2026-05-06
+
+**Permission-denial classification (5 patterns).**
+
+Added a denial classifier that promotes failed tool calls to a distinct `denial` type when the failure shape matches a known pattern (user rejected, settings blocked, sandbox denied, requires approval, hook blocked). The dashboard renders these with a `DENIED` badge separate from real runtime errors.
+
+**Post-mortem**: shipped against invented patterns. See architectural caveat above.
+
+### 0.3.8 — 2026-05-05
+
+**Git context capture.**
+
+Every event now carries `metadata.git = { branch, sha, shortSha, remote, dirty }` when running inside a git repo. Cached 30s per cwd to avoid spawning git on every event. Captures the exact code state that produced the trace.
+
+### 0.3.7 — 2026-05-05
+
+**`ScheduleWakeup` recognition.**
+
+When the agent calls `ScheduleWakeup`, the SDK records the parameters. The next `UserPromptSubmit` that matches gets tagged `promptSource: 'system'` so the dashboard can distinguish autonomous loop ticks from real user prompts. Renders as a `SYSTEM` badge in the timeline.
+
+### 0.3.5 — 2026-05-05
+
+**Agent response capture.**
+
+The Stop hook now reads the local transcript backward to find the agent's final text + stop reason + last thinking block. Surfaces them in the dashboard's event detail panel (masked by default, eye toggle to reveal).
+
+### 0.3.4 — 2026-05-04
+
+**Marker file (`.voight-agent-id`) for rename-proof identity.**
+
+Server returns the agent's CUID on every event response. SDK writes it to `<cwd>/.voight-agent-id`. Future events match by primary key — rename-proof, folder-rename-proof.
+
+### 0.3.3 — 2026-05-04
+
+**Explicit `metadata.tokensBreakdown` for exact pricing.**
+
+The flat `tokens.input` field conflates `inputBase`, `cacheCreation`, and `cacheRead` at the full rate. New breakdown field gives the backend exact prices (cache_read at 0.10×, cache_creation at 1.25×, input at 1.00×).
+
+### 0.3.2 — 2026-05-04
+
+**ESM fs imports (fix silent fail on transcripts >4MB).**
+
+### 0.3.1 — 2026-05-03
+
+**Lenient transcript matcher** (handles edge cases in attribution).
+
+### 0.3.0 — 2026-05-03
+
+**Transcript-based token capture.**
+
+The SDK now walks the local transcript JSONL on every PostToolUse, finds the assistant message that initiated the current tool, and pulls real token usage. Dedup via assistant message UUID — 1 message → N tools attributes once.
+
+## Earlier versions
+
+0.1.x and 0.2.x were the initial integration drafts. Not documented here — start at 0.3.0.
+
+## Stay updated
+
+- npm: [`@voightxyz/sdk`](https://www.npmjs.com/package/@voightxyz/sdk)
+- GitHub: [`voightxyz/voight-sdk`](https://github.com/Voightxyz/voight-sdk) (releases tagged)
+- Twitter: [@voightxyz](https://x.com/voightxyz)

@@ -1,0 +1,116 @@
+---
+title: Events
+description: "The atomic unit of Voight — every agent action is one event."
+---
+
+An **event** is the smallest unit of data Voight captures. Every prompt, tool call, decision, transaction, error, or anomaly your agent produces is one event row.
+
+## Event types
+
+The `type` field is one of:
+
+| Type | When it fires |
+| --- | --- |
+| `decision` | Reasoning step, user prompt, agent finishing a turn. Anything that isn't a tool execution or transaction. |
+| `action` | A tool call was attempted or completed (PreToolUse / PostToolUse from Claude Code). |
+| `tool` | Same as `action` — legacy label, library mode often uses this. |
+| `tx` | An on-chain transaction was signed and submitted. |
+| `reasoning` | Free-form thinking trace, often paired with tool calls. |
+| `error` | A tool failed, or the agent crashed. |
+
+The SDK chooses the right type automatically based on what fired the hook.
+
+## Event payload
+
+Every event includes:
+
+```ts
+{
+  agentId: string             // stable agent identifier (CUID or label)
+  timestamp: string           // agent-supplied ISO timestamp
+  type: EventType             // see above
+  reasoning?: string          // human-readable description
+  toolExecuted?: string       // name of the tool, if applicable
+  toolsConsidered?: string[]  // alternatives the agent rejected
+  transaction?: string        // Solana tx signature, if applicable
+  amount?: { token, value }   // payment / swap amount
+  outcome?: 'pending' | 'success' | 'failed'
+  durationMs?: number         // for PostToolUse events
+  errorMessage?: string       // raw error text when outcome=failed
+  model?: string              // LLM model used (claude-opus-4-7, etc.)
+  tokens?: { input, output, total }
+  metadata?: {                // free-form additional data
+    source: 'claude-code' | 'cursor' | 'sdk' | ...
+    hookEvent?: 'PreToolUse' | 'PostToolUse' | 'Stop' | ...
+    sessionId?: string
+    traceId?: string
+    cwd?: string
+    git?: { branch, sha, remote, dirty }
+    detail?: { /* per-tool structured detail */ }
+    tokensBreakdown?: {
+      inputBase, cacheCreation, cacheRead, output
+    }
+    privacyLevel?: 'minimal' | 'standard' | 'full'
+    // anything else you want to attach
+  }
+}
+```
+
+## What gets captured at each privacy level
+
+| Field | Minimal | Standard | Full |
+| --- | --- | --- | --- |
+| `toolExecuted`, `outcome`, `durationMs` | ✅ | ✅ | ✅ |
+| `tokens`, `metadata.tokensBreakdown`, `model` | ✅ | ✅ | ✅ |
+| `metadata.sessionId`, `metadata.traceId`, `metadata.phase` | ✅ | ✅ | ✅ |
+| `reasoning`, `metadata.detail` | ❌ | ✅ scrubbed | ✅ raw |
+| `errorMessage`, `metadata.response_preview` | ❌ | ✅ scrubbed | ✅ raw |
+| `metadata.cwd`, `metadata.git` | ❌ | ✅ | ✅ |
+| `input.prompt`, Stop event `responseText`/`thinkingPreview` | ❌ | ✅ scrubbed | ✅ raw |
+
+Token counts and USD spend are pure numerics — they pass through every level unchanged. The dashboard's KPIs and charts work identically regardless of which level you pick. See the [privacy overview](/privacy/overview) for the full breakdown.
+
+## Cost attribution
+
+Voight computes USD cost per event from the token breakdown:
+
+- **Path A — exact** (`metadata.tokensBreakdown` from SDK 0.3.3+): each token flavour priced at its real rate. `cacheRead` at 0.10× base input, `cacheCreation` at 1.25× base, `inputBase` at 1.00×, `output` at the output rate.
+- **Path B — heuristic** (`metadata.tokens` with `source: 'claude-code'`): assumes 95% of input is `cache_read`, applies approximate discount. Used as fallback for older SDK versions.
+- **Path C — flat** (library callers): no breakdown, prices `input` and `output` at full rates.
+
+Pricing tables are hard-coded per model (Anthropic, OpenAI, Google) and verified against the providers' published docs.
+
+## Anomaly detection
+
+A scheduler runs every 5 minutes and computes 4 anomaly rules per agent over the last 7 days:
+
+| Rule | Trigger |
+| --- | --- |
+| `event_surge` | Events in last hour > 3× the 7-day hourly baseline (autonomous agents only — coding sessions are too bursty) |
+| `error_rate_high` | ≥10% failed runs in 1h with ≥5 completed runs |
+| `cost_spike` | Today's spend ≥3× the daily 7-day average AND today's spend ≥$1 |
+| `orphan_spike` | ≥20% orphaned PreToolUse events with no matching PostToolUse, AND ≥2× baseline |
+
+When triggered, an `Alert` row is created/updated with severity (low / medium / high based on deviation), dedup by `<type>|<agentId>` fingerprint. Alerts have a full lifecycle: `triggeredAt`, `lastTriggeredAt`, `acknowledgedAt`, `snoozedUntil`, `resolvedAt`.
+
+Alert delivery channels (Telegram, email, webhooks) ship in **v1.0**. Today alerts persist + surface in the dashboard's Alerts page.
+
+## Pre/Post pairing
+
+Each tool call fires two hook events from Claude Code:
+
+- `PreToolUse` (before execution) — outcome `pending`, fingerprint `sessionId|toolName|toolInput`
+- `PostToolUse` (after execution) — same fingerprint, with `durationMs` and `outcome` filled in
+
+The dashboard pairs them by fingerprint and renders one row per tool call, with the Pre suppressed if the Post arrived. If a `PreToolUse` is orphaned for >120s (no matching Post), Voight classifies it as `orphanedPre` and counts it toward the error rate.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Traces" icon="diagram-project" href="/concepts/traces">
+    Group events by trace ID — one trace = everything the agent did to answer one prompt.
+  </Card>
+  <Card title="Sessions" icon="layer-group" href="/concepts/sessions">
+    Group events by session ID — one session = one Claude Code launch / one bot run.
+  </Card>
+</CardGroup>

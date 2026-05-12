@@ -1,0 +1,240 @@
+---
+title: Library mode
+description: "Import @voightxyz/sdk in TypeScript/JavaScript agents you build yourself."
+---
+
+For autonomous agents, trading bots, ElizaOS characters, Solana Agent Kit flows, or anything you build in TS/JS — import the library directly.
+
+## Install
+
+```bash
+npm install @voightxyz/sdk
+```
+
+Requirements:
+
+- Node.js 18+ (uses global `fetch`)
+- Bun, Deno, browsers, and Cloudflare Workers all supported
+
+## Quick start
+
+```ts
+import { Voight } from '@voightxyz/sdk'
+
+const voight = new Voight({
+  agentId: 'trading-bot.sol',     // SNS domain recommended for autonomous agents
+  apiKey: process.env.VOIGHT_KEY, // from voight.xyz/dashboard
+})
+
+await voight.log({
+  reasoning: 'SOL/USDC spread 8bps — arb window open',
+  toolExecuted: 'jupiter.swap',
+  transaction: '4zK…9Fp',
+  amount: { token: 'SOL', value: 1.5 },
+  outcome: 'success',
+})
+```
+
+Returns `{ ok: true, eventId, agentId }` on success, `{ ok: false, error: { code, message } }` on failure.
+
+## Constructor options
+
+```ts
+interface VoightOptions {
+  agentId: string                   // required
+  apiKey: string                    // required
+  endpoint?: string                 // default: production
+  defaults?: Record<string, unknown>  // merged into every event's metadata
+  swallowErrors?: boolean           // default: true
+  fetch?: typeof fetch              // override (for tests / older runtimes)
+  privacyLevel?: PrivacyLevel       // override the per-event privacy level
+}
+```
+
+| Option | Type | Default | Purpose |
+| --- | --- | --- | --- |
+| `agentId` | string | — | Your agent's stable identifier. Recommend a SNS domain for autonomous bots (`trading-bot.sol`), a stable label for services (`market-watcher`). |
+| `apiKey` | string | — | From the dashboard. Required for ingestion. |
+| `endpoint` | string | `https://voight-production.up.railway.app` | Override for self-hosted deployments. |
+| `defaults` | object | `{}` | Metadata merged into every event (e.g. `{ env: 'prod', region: 'us-east' }`). |
+| `swallowErrors` | boolean | `true` | When true, `voight.log()` never throws — failures return `{ ok: false }`. Recommended for production. |
+| `fetch` | function | `globalThis.fetch` | Inject a custom fetch (for tests, older runtimes). |
+| `privacyLevel` | `'minimal' \| 'standard' \| 'full'` | `'full'` | For library mode, defaults to Full. Pass `'standard'` to get local PII scrubbing. |
+
+## The `log()` method
+
+```ts
+interface LogInput {
+  type?: 'reasoning' | 'tool' | 'tx' | 'decision' | 'action' | 'error'
+  input?: { prompt?: string; context?: Record<string, unknown> }
+  reasoning?: string
+  toolsConsidered?: string[]
+  toolExecuted?: string
+  transaction?: string         // Solana tx signature
+  amount?: { token: string; value: number }
+  outcome?: 'pending' | 'success' | 'failed'
+  durationMs?: number
+  errorMessage?: string
+  model?: string
+  tokens?: { input?: number; output?: number; total?: number }
+  metadata?: Record<string, unknown>  // anything custom
+  timestamp?: string | number  // ISO string or unix ms
+}
+```
+
+All fields optional. The server normalises and defaults `type: 'decision'` if you don't pass one.
+
+Retry behaviour:
+
+- 3 attempts by default
+- Exponential backoff
+- Respects `Retry-After` header on 429s
+- Swallowed by default (`swallowErrors: true`) — recommended for production agents that shouldn't crash on observability failures
+
+## Examples
+
+### Trading bot
+
+```ts
+const voight = new Voight({
+  agentId: 'arbitrage.sol',
+  apiKey: process.env.VOIGHT_KEY,
+  defaults: { strategy: 'mean-reversion', env: 'prod' },
+})
+
+// 1. Reasoning step
+await voight.log({
+  type: 'reasoning',
+  reasoning: `SOL/USDC spread at ${spreadBps}bps, threshold ${thresholdBps}bps — open arb`,
+})
+
+// 2. Tool / tx
+await voight.log({
+  type: 'tx',
+  toolExecuted: 'jupiter.swap',
+  transaction: txSignature,
+  amount: { token: 'SOL', value: 1.5 },
+  outcome: 'success',
+})
+
+// 3. Error
+try {
+  await maybeFlakyOperation()
+} catch (err) {
+  await voight.log({
+    type: 'error',
+    outcome: 'failed',
+    errorMessage: (err as Error).message,
+  })
+}
+```
+
+### ElizaOS character (skill plugin)
+
+```ts
+// Until @voightxyz/eliza-skill ships, you can wire it manually:
+import { Voight } from '@voightxyz/sdk'
+
+const voight = new Voight({
+  agentId: 'eliza-research-bot',
+  apiKey: process.env.VOIGHT_KEY,
+})
+
+agent.on('beforeAction', async (action) => {
+  await voight.log({ type: 'action', toolsConsidered: [action.name] })
+})
+
+agent.on('afterAction', async (action, result) => {
+  await voight.log({
+    type: 'action',
+    toolExecuted: action.name,
+    outcome: result.ok ? 'success' : 'failed',
+    durationMs: result.elapsed,
+  })
+})
+```
+
+A native ElizaOS plugin (`@voightxyz/eliza-skill`) is on the roadmap and will simplify this to one line.
+
+### LangChain / LangGraph agent
+
+```ts
+import { Voight } from '@voightxyz/sdk'
+
+const voight = new Voight({ agentId: 'lc-agent', apiKey: process.env.VOIGHT_KEY })
+
+const callbacks = [{
+  handleToolStart: async (tool, input) => {
+    await voight.log({ type: 'action', toolsConsidered: [tool.name] })
+  },
+  handleToolEnd: async (output) => {
+    await voight.log({ type: 'action', outcome: 'success' })
+  },
+  handleLLMEnd: async ({ generations, llmOutput }) => {
+    await voight.log({
+      type: 'reasoning',
+      reasoning: generations[0]?.[0]?.text,
+      tokens: {
+        input: llmOutput?.tokenUsage?.promptTokens,
+        output: llmOutput?.tokenUsage?.completionTokens,
+      },
+    })
+  },
+}]
+```
+
+## Error types
+
+```ts
+type VoightError =
+  | { code: 'invalid_payload'; message: string }   // your payload failed Zod validation
+  | { code: 'unauthorized'; message: string }      // bad API key
+  | { code: 'rate_limited'; message: string }      // 429
+  | { code: 'network'; message: string }           // fetch failed
+  | { code: 'server'; message: string }            // 5xx
+  | { code: 'unknown'; message: string }
+```
+
+When `swallowErrors: false`, these throw. Otherwise they return as `{ ok: false, error }`.
+
+## Privacy in library mode
+
+By default, library callers send events as **Full** (no scrubbing). To opt into Standard scrubbing per-event:
+
+```ts
+import { Voight, scrubPii } from '@voightxyz/sdk'
+
+// Manual scrubbing
+await voight.log({
+  reasoning: scrubPii(`API call with token ${apiKey}`),
+})
+
+// Or set a privacy level at construction time and let the SDK handle it
+const voight = new Voight({
+  agentId: 'my-bot',
+  apiKey: process.env.VOIGHT_KEY,
+  privacyLevel: 'standard',  // applies scrubPii to every event automatically
+})
+```
+
+The same 12 PII patterns + Luhn-validated card detection apply. See the [PII patterns reference](/privacy/pii-patterns).
+
+## `check()` and `enforce()` — v1.0
+
+```ts
+const decision = await voight.check({ action: 'swap', context: { amount: 50 } })
+if (!decision.allow) return // blocked by policy
+```
+
+Today these return `{ allow: true, reason: 'not-implemented' }` so you can instrument call sites now and flip a flag later. Real implementation ships in v1.0.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="HTTP API" icon="globe" href="/sdk/http-api">
+    For runtimes that don't use npm at all.
+  </Card>
+  <Card title="POST /v1/events" icon="bolt" href="/api-reference/events">
+    Full HTTP API schema for events ingestion.
+  </Card>
+</CardGroup>

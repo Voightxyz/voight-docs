@@ -1,0 +1,98 @@
+---
+title: PII patterns
+description: "The 12 patterns + Luhn-validated card detection used by Standard mode."
+---
+
+When you pick **Standard** privacy mode, every string field in every event is run through [`scrubPii()`](https://github.com/Voightxyz/voight-sdk/blob/main/src/privacy.ts) before the SDK ships it. This page documents exactly which patterns match and how each is replaced.
+
+## How it works
+
+The function runs a list of regular expressions in deliberate order (most-specific first, multi-line patterns first). Once a pattern matches, the matched substring is replaced with a tagged token like `[REDACTED-API-KEY]`. The result is idempotent — re-running `scrubPii()` on already-scrubbed text leaves it stable.
+
+The pattern set is:
+
+| Name | Pattern (simplified) | Replacement |
+| --- | --- | --- |
+| PEM private key block | `-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----...-----END...` | `[REDACTED-PRIVATE-KEY]` |
+| JWT | `eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}` | `[REDACTED-JWT]` |
+| Anthropic key | `sk-ant-[A-Za-z0-9_-]{40,}` | `[REDACTED-API-KEY]` |
+| OpenAI key | `sk-(proj-)?[A-Za-z0-9_-]{20,}` | `[REDACTED-API-KEY]` |
+| Stripe live | `(sk\|pk)_live_[A-Za-z0-9]{20,}` | `[REDACTED-API-KEY]` |
+| GitHub fine-grained PAT | `github_pat_[A-Za-z0-9_]{20,}` | `[REDACTED-API-KEY]` |
+| GitHub classic PAT | `ghp_[A-Za-z0-9]{36}` | `[REDACTED-API-KEY]` |
+| AWS access key | `AKIA[A-Z0-9]{16}` | `[REDACTED-API-KEY]` |
+| Slack token | `xox[baprs]-[A-Za-z0-9-]{10,}` | `[REDACTED-API-KEY]` |
+| Voight key | `vk_[A-Za-z0-9_-]{32,}` | `[REDACTED-API-KEY]` |
+| Email | `[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}` | `[REDACTED-EMAIL]` |
+| Phone E.164 | `\+\d{10,15}\b` | `[REDACTED-PHONE]` |
+| Credit card | 13–19 digits + Luhn checksum | `[REDACTED-CARD]` |
+
+## Examples
+
+```ts
+import { scrubPii } from '@voightxyz/sdk'
+
+scrubPii(`curl -H "Authorization: Bearer sk-ant-api03-AbCd...X" https://api.example.com`)
+// → curl -H "Authorization: Bearer [REDACTED-API-KEY]" https://api.example.com
+
+scrubPii(`paid with 4242424242424242 — confirmation @ alice@example.com`)
+// → paid with [REDACTED-CARD] — confirmation @ [REDACTED-EMAIL]
+
+scrubPii(`auth=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NSJ9.signature`)
+// → auth=[REDACTED-JWT]
+
+scrubPii(`call +14155552671 to confirm`)
+// → call [REDACTED-PHONE] to confirm
+
+scrubPii(`-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQ...\n-----END RSA PRIVATE KEY-----`)
+// → [REDACTED-PRIVATE-KEY]
+```
+
+## What it deliberately doesn't match
+
+To avoid false positives that would harm dev workflows:
+
+| Looks like | But not redacted | Reason |
+| --- | --- | --- |
+| `email_template` | not an email | no `@` in middle |
+| `support@app` | not an email | no TLD |
+| `sk_test_xxx` (Stripe test keys) | not redacted | not actual money |
+| `AKIAfoo` (lowercase tail) | not an AWS key | real keys are uppercase |
+| 16-digit order numbers | not a card | fails Luhn checksum |
+| 10-digit numbers without `+` | not a phone | E.164 requires `+` prefix |
+
+The full test suite (`tests/unit/privacy.test.ts` — 30+ tests) verifies positive matches + adversarial negatives.
+
+## Idempotency
+
+`scrubPii()` is idempotent. Re-running it on already-scrubbed text is safe:
+
+```ts
+const once = scrubPii(`alice@example.com KEY=AKIAIOSFODNN7EXAMPLE`)
+const twice = scrubPii(once)
+// once === twice  →  true
+```
+
+This matters because the SDK runs it once per event, but if a downstream layer ever runs it again, nothing breaks.
+
+## Performance
+
+Designed to handle a 2KB event payload in <10ms on a modern laptop. The pattern set is small (~13 regexes), there's no network or filesystem I/O, and the regexes are anchored with word boundaries to avoid catastrophic backtracking.
+
+## Adding new patterns
+
+The pattern set is intentionally conservative — we'd rather miss an edge case than create false positives that confuse developers. Industry libraries like [gitleaks](https://github.com/gitleaks/gitleaks), [detect-secrets](https://github.com/Yelp/detect-secrets), or [trufflehog](https://github.com/trufflesecurity/trufflehog) ship 400+ patterns; we don't.
+
+If you have a credential format that should be covered (especially crypto wallet private keys / mnemonic phrases / API tokens for AI providers we haven't added yet), open an issue at [voightxyz/voight-sdk](https://github.com/Voightxyz/voight-sdk).
+
+## What gets sent under Minimal mode
+
+If Standard's scrubbing isn't strict enough for your use case, **Minimal mode drops the content fields entirely** — `reasoning`, `errorMessage`, `input`, `metadata.detail`, `metadata.response_preview`, `metadata.responseText`, `metadata.cwd`, `metadata.git` all disappear. What's left is tool names, timings, token counts, and identifiers — useful for dashboards, useless to anyone trying to reconstruct your work.
+
+See the [privacy overview](/privacy/overview) field-by-field table for details.
+
+## Next
+
+<Card title="Data handling" icon="database" href="/privacy/data-handling">
+  Where data lives once it leaves your machine, retention, deletion flow.
+</Card>

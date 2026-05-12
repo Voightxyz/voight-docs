@@ -1,0 +1,97 @@
+---
+title: Data handling
+description: "Where data lives, who can access it, retention, deletion."
+---
+
+## What gets sent
+
+When the SDK ships an event to Voight's backend, the payload is whatever survived the privacy filter at the level you picked. See the [privacy overview](/privacy/overview) for the field-by-field breakdown.
+
+## Transport
+
+- TLS 1.2+ over HTTPS to `voight-production.up.railway.app`
+- API key authentication via `Authorization: Bearer vk_...` header
+- API keys are SHA-256 hashed in the database; the plaintext value is never persisted server-side
+
+## Storage
+
+- **Database**: Postgres 14+ hosted on [Railway](https://railway.app), located in their US-East region
+- **Event metadata**: stored as JSON in `Event.metadata` column (`Json?` in Prisma)
+- **Token usage**: stored as breakdown fields
+- **Content (under Standard or Full)**: stored verbatim after scrubbing
+- **API key plaintext**: never stored. Only `keyHash` (sha256) and `keyPrefix` (first 8 chars, for UI display)
+
+## Who can access your data
+
+- **You**: via your Privy session (JWT signed by `auth.privy.io`) → `/v1/me/*` endpoints
+- **Voight operators (us)**: technical staff with database access. We don't proactively read your events but we can if we need to debug an issue. This is the trust gap the privacy levels exist to mitigate.
+- **No one else by default**: agents are tied to your `userId`. Cross-user reads are blocked at the API layer.
+
+If you publish an agent on the public Explorer (by registering it on Solana's Agent Registry), its metadata becomes public — but its **events** stay private. Only the agent's identity, capabilities, and aggregated reputation are surfaced.
+
+## Retention
+
+Per pricing tier:
+
+| Tier | Event retention |
+| --- | --- |
+| Free | 7 days |
+| Pro | 90 days |
+| Enterprise | Custom (typically 1 year+) |
+
+Events older than your tier's retention window are automatically purged from the database via a scheduled job. This is irreversible — export anything you want to keep before the window closes (Audit log → Export CSV).
+
+## Deletion
+
+### Delete one agent
+
+Open `/dashboard/agents/<id>` → trash icon top-right → modal asks you to type the agent's displayName to confirm.
+
+What happens:
+
+- The agent is **soft-deleted** (`Agent.deletedAt` timestamp set, row not removed from the DB)
+- Subsequent events ingested for that `agentId` return `410 Gone` to the SDK (ingestion block)
+- The agent disappears from all dashboard reads — events, sessions, traces, errors, alerts
+- Other agents in your account keep ingesting normally — isolation is per-agent
+- The original events stay in the database for the retention window, then get purged
+
+### Delete your account
+
+Email `support@voight.xyz` requesting account deletion. We:
+
+1. Soft-delete all your agents (same flow as above)
+2. Soft-delete your user row
+3. Purge events on the next retention cycle
+4. Confirm by email when complete
+
+No self-serve account deletion in the dashboard yet — that ships in v1.0 alongside Stripe billing.
+
+## What about Solana?
+
+When the on-chain mint flow ships (v1.0), registering an agent on Solana's Agent Registry creates:
+
+- A Metaplex Core asset with your agent's metadata (name, description, agentUri)
+- A signature from your Solana wallet
+- An entry indexable by anyone
+
+**This is public, on-chain, and immutable.** You should only register agents you're explicitly comfortable making public. Your dashboard events remain private regardless of whether the agent itself is registered.
+
+## Compliance posture
+
+Voight is being built with EU AI Act and SEC compliance in mind:
+
+- **Article 12 (immutable event logs)**: tamper-evident logs via Solana hash anchoring (shipping v1.0). Today the database is the source of truth; on-chain anchoring will provide cryptographic proof of integrity.
+- **Article 14 (human oversight)**: HITL routing via `voight.check()` + `voight.enforce()` (shipping v1.0). Today these are no-ops returning `{ allow: true }`.
+- **Audit exports**: CSV today, PDF + JSON in Pro tier (shipping v1.0). All exports include content hashes for verification.
+- **SOC 2 Type II**: roadmap, Enterprise tier.
+
+Voight is **not yet** SOC 2 certified. If your compliance use case requires it today, [reach out](mailto:support@voight.xyz) — we can discuss timelines.
+
+## Open questions / honest gaps
+
+- **No end-to-end encryption today.** Storage is plaintext after scrubbing. End-to-end encryption with user-managed keys is on the v0.2 enterprise roadmap (`Umbra` integration).
+- **Backups** of the Postgres database are managed by Railway and follow their retention. We don't currently expose backup retention to users.
+- **GDPR right-to-delete** is honored on email request but not yet self-serve.
+- **Anonymized aggregates** (counts, usage patterns) may be used for product analytics. We never use raw event content for this.
+
+If you have a specific compliance question or use case, email `support@voight.xyz`.

@@ -1,0 +1,177 @@
+---
+title: POST /v1/events
+description: "Ingest an agent event."
+---
+
+The single entry point for agent telemetry. Authenticated via API key.
+
+## Endpoint
+
+```
+POST https://voight-production.up.railway.app/v1/events
+```
+
+## Headers
+
+```
+Authorization: Bearer vk_YOUR_API_KEY
+Content-Type: application/json
+```
+
+## Request body
+
+```json
+{
+  "agentId": "string",
+  "timestamp": "string | number (optional)",
+  "type": "reasoning | tool | tx | decision | action | error (optional)",
+  "input": { "prompt": "string", "context": {} },
+  "reasoning": "string (optional)",
+  "toolsConsidered": ["string"],
+  "toolExecuted": "string (optional)",
+  "transaction": "string (optional, Solana signature)",
+  "amount": { "token": "string", "value": "number" },
+  "outcome": "pending | success | failed (optional)",
+  "durationMs": "number (optional)",
+  "errorMessage": "string (optional)",
+  "model": "string (optional)",
+  "metadata": { /* free-form */ }
+}
+```
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `agentId` | string (1–120 chars) | Sometimes | Required unless your API key is pre-bound to an agent. Can be a SNS domain, a CUID, or a free-form label. |
+| `timestamp` | ISO 8601 string or unix ms number | No | Defaults to server-received time. |
+| `type` | enum | No | Defaults to `decision`. |
+| `input` | object | No | `{ prompt, context }` shape. Stored verbatim in DB after scrubbing. |
+| `reasoning` | string | No | Free-form human-readable trace. |
+| `toolsConsidered` | string[] | No | Alternative tools the agent rejected. |
+| `toolExecuted` | string | No | Name of the tool that ran. |
+| `transaction` | string or null | No | Solana tx signature. |
+| `amount` | object | No | `{ token, value }`. For swaps / transfers / payments. |
+| `outcome` | enum | No | One of `pending`, `success`, `failed`. |
+| `durationMs` | non-negative integer | No | Tool runtime. |
+| `errorMessage` | string | No | When `outcome: 'failed'`. |
+| `model` | string | No | LLM model used (e.g. `claude-opus-4-7`). |
+| `metadata` | object | No | Free-form JSON. Voight reads specific keys (`tokensBreakdown`, `traceId`, `sessionId`, `cwd`, `git`, `privacyLevel`, `denial`, `wakeup`) but accepts any custom keys. |
+
+## Validation
+
+The payload is validated with [Zod](https://zod.dev) on the server. Failed validation returns `400 Bad Request` with details. Unknown top-level keys are rejected; unknown keys inside `metadata` are accepted.
+
+## Identity resolution
+
+The server resolves `agentId` to an internal cuid in this order:
+
+1. **CUID match** — if `agentId` matches `/^c[a-z0-9]{24}$/`, look up by primary key directly. Fastest path. Used by SDK 0.3.4+ after the first event populates `.voight-agent-id`.
+2. **`snsName` match** — for SNS domains like `trading-bot.sol`.
+3. **`displayName` match** — for renamed agents.
+4. **Create new** — if nothing matched, create a new Agent row.
+
+The response always includes the resolved cuid as `agentId`, regardless of what you sent. Persist it locally to skip resolution on subsequent calls.
+
+## Response
+
+### 202 Accepted
+
+```json
+{
+  "id": "evt_clz3...",
+  "accepted": true,
+  "agentId": "cmoq...",
+  "eventId": "evt_clz3..."
+}
+```
+
+`agentId` in the response is the resolved cuid. `eventId` is the new event's id.
+
+### 400 Bad Request
+
+```json
+{
+  "error": "validation_failed",
+  "details": [
+    {
+      "path": ["amount", "value"],
+      "message": "Expected number, received string"
+    }
+  ]
+}
+```
+
+### 401 Unauthorized
+
+```json
+{
+  "error": "unauthorized",
+  "reason": "missing_bearer | invalid_key | revoked_key"
+}
+```
+
+### 410 Gone
+
+```json
+{
+  "error": "agent_deleted"
+}
+```
+
+The agent has been soft-deleted from the dashboard. Ingestion is blocked. Subsequent requests for the same `agentId` will also return 410. The SDK can react by surfacing a warning to the user.
+
+### 429 Too Many Requests
+
+```json
+{
+  "error": "rate_limited"
+}
+```
+
+Headers include `Retry-After`. The SDK respects this automatically with exponential backoff.
+
+### 500 / 502 / 503
+
+Backend error. Retry with backoff. The SDK does this automatically; for direct HTTP callers, implement reasonable retries.
+
+## Side effects
+
+When an event is accepted, the server also:
+
+- Updates `agent.lastSeenAt` to now (fire-and-forget)
+- Lazy-backfills `agent.framework` if the event has `metadata.tool` and the field was null
+- May trigger anomaly evaluation if this event crosses an alert threshold (next scheduler tick at most 5 minutes later)
+- Stores a `contentHash` (SHA-256 of the normalised payload) for future on-chain anchoring (mint flow ships in v1.0)
+
+## Pre-bound vs free API keys
+
+When you create an API key in the dashboard:
+
+- **Default**: not bound to an agent. Caller specifies `agentId` per event.
+- **Bound to an agent**: caller can omit `agentId`; the server uses the bound one. Useful for autonomous bots where the key is dedicated.
+
+Bound keys can't be used to ingest events for other agents — Voight rejects mismatched `agentId` values.
+
+## Idempotency
+
+Ingestion is **not idempotent** by default. Each call creates a new row. If you need dedup (e.g. retrying after timeout), generate a stable `metadata.dedupKey` on your side and reconcile downstream.
+
+## Rate limits
+
+| Tier | Events / month | Burst limit |
+| --- | --- | --- |
+| Free | 10,000 | 60 events / minute |
+| Pro | 300,000 | 600 events / minute |
+| Enterprise | Unlimited | Custom |
+
+Burst limits are enforced today; monthly quotas ship server-side in v1.0 alongside Stripe billing.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="GET /v1/agents" icon="users" href="/api-reference/agents">
+    Public agent listing for the Explorer.
+  </Card>
+  <Card title="/v1/me/*" icon="lock" href="/api-reference/me">
+    Authenticated dashboard endpoints.
+  </Card>
+</CardGroup>

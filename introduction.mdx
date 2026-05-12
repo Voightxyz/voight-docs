@@ -1,0 +1,84 @@
+---
+title: Introduction
+description: "Real-time observability + on-chain trust for AI agents."
+---
+
+<img
+  className="block dark:hidden"
+  src="/images/landing.jpeg"
+  alt="Voight landing"
+/>
+<img
+  className="hidden dark:block"
+  src="/images/landing.jpeg"
+  alt="Voight landing"
+/>
+
+## What is Voight?
+
+Voight is two things in one SDK:
+
+1. **Real-time observability for any AI agent** — every prompt, tool call, file edit, decision, and on-chain transaction your agent makes streams to a live dashboard. Anomaly alerts. Cost attribution. Per-event privacy controls.
+
+2. **A Solana-native identity layer for those agents** — the on-ramp to register your agent on Solana's Agent Registry as a Metaplex Core asset, gaining a portable identity, on-chain reputation, public Explorer presence, and x402 payment rails.
+
+The combination is what makes the platform: agents observed under privacy controls today, with a path onto Solana when they're ready to be public, monetized, or audited.
+
+## Who is Voight for?
+
+Two audiences sharing one need — visibility into AI agents in production:
+
+<CardGroup cols={2}>
+  <Card title="Developers using AI coding assistants" icon="terminal">
+    Claude Code, Cursor, Codex, Gemini, Replit Agent. One paste wires the SDK
+    and every prompt + tool call streams live to your dashboard. Privacy chips
+    per-event so sensitive content stays on your machine via local PII scrubbing.
+  </Card>
+  <Card title="Teams running autonomous agents" icon="robot">
+    Trading bots, ElizaOS / Solana Agent Kit agents, payment flows. Same SDK,
+    same dashboard. Compliance-ready audit exports anchored cryptographically
+    to Solana — provable, not trustable.
+  </Card>
+</CardGroup>
+
+## Core capabilities
+
+<CardGroup cols={2}>
+  <Card title="Live timeline" icon="chart-line" href="/concepts/events">
+    Every prompt, tool call, transaction, and decision streamed in real time.
+    Filter by agent, since, type, trace.
+  </Card>
+  <Card title="Privacy-first capture" icon="shield" href="/privacy/overview">
+    Three-level model — Minimal, Standard, Full. Local PII scrubbing on your
+    machine before transmission.
+  </Card>
+  <Card title="On-chain audit trail" icon="link" href="/concepts/traces">
+    Tamper-evident logs anchored on Solana. Hashes verifiable without trusting
+    Voight as operator.
+  </Card>
+  <Card title="Anomaly detection" icon="bell" href="/concepts/events">
+    Four built-in rules — event surge, error rate, cost spike, orphan tools.
+    Per-agent baselines, no rules to write.
+  </Card>
+</CardGroup>
+
+## Three ways in
+
+```bash
+# 1. Wire into your IDE — Claude Code, Cursor, Codex
+npx -y @voightxyz/sdk setup
+
+# 2. Library mode for autonomous agents
+npm install @voightxyz/sdk
+
+# 3. HTTP for anything that speaks JSON
+curl https://voight-production.up.railway.app/v1/events \
+  -H "authorization: Bearer $VOIGHT_KEY" -d '{...}'
+```
+
+Same event stream, same dashboard, same alerts.
+
+<Card title="Get started in 30 seconds" icon="rocket" href="/quickstart">
+  Wire Voight into Claude Code with one command. See your first events
+  stream live before this paragraph finishes loading.
+</Card>

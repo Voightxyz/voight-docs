@@ -1,0 +1,76 @@
+---
+title: Agents
+description: "What an agent is in Voight, how identity is tracked, and how multi-agent setups work."
+---
+
+An **agent** in Voight is any entity that produces traceable events — your Claude Code session, your Cursor instance, an autonomous DeFi bot, an ElizaOS character, anything that calls `voight.log()` or wires the SDK hook.
+
+## Agent identity
+
+Each agent has a unique `id` (a [cuid](https://github.com/paralleldrive/cuid2)) assigned by the server the first time it's seen. From that point on, the SDK matches events to that agent by `id`, not by name — meaning **renaming or moving the project folder doesn't break the timeline**.
+
+How identity is resolved by the SDK, in order:
+
+<Steps>
+  <Step title="VOIGHT_AGENT_ID env override">
+    Explicit override. Highest priority. Useful for CI / multi-agent setups where you want to control identity from outside.
+  </Step>
+  <Step title=".voight-agent-id marker file">
+    A plain-text file in your project's cwd holding the cuid. Written by the SDK after the first successful event so subsequent events match by primary key.
+  </Step>
+  <Step title="Framework label fallback">
+    `claude-code:<folder-basename>` for first-time installs, `claude-code:<session-slice>` if cwd is unavailable.
+  </Step>
+</Steps>
+
+The server normalises: if it sees a known cuid, it matches by `id`. Otherwise it tries `snsName`, then `displayName`, and finally creates a new agent row.
+
+## How agents are created
+
+Three paths:
+
+1. **Tool-emitted** — the SDK auto-creates an agent the first time it sees an event from a project (the default for Claude Code, Cursor, Codex).
+2. **SDK-instrumented** — you import `@voightxyz/sdk` in your code and explicitly pass an `agentId` to the constructor.
+3. **On-chain registered** — agents already registered on Solana's [Agent Registry](https://solscan.io/account/8oo4dC4JvBLwy5tGgiH3WwK4B9PWxL9Z4XjA2jzkQMbQ) program are imported automatically by Voight's indexer with `source='agent-registry'`.
+
+## Agent metadata
+
+Each agent carries two metadata blobs:
+
+- **`metadata` (chain-derived)** — written by the on-chain indexer when the agent is registered. Includes `agentUri` (off-chain pointer), `feedback_count`, `response_count`, `revoke_count`.
+- **`enriched` (off-chain)** — written by a separate metadata-enrichment worker that fetches the `agentUri` JSON. Includes display name, avatar, capabilities, services declared.
+
+These two are intentionally separated — two different workers write them, they never race.
+
+## Multi-agent setups
+
+You can run as many agents as you want. The dashboard aggregates across all of them while letting you filter per-agent.
+
+Common multi-agent patterns:
+
+- **Per-project agent** — every Claude Code session in a different repo becomes its own agent. Default behaviour.
+- **Per-bot agent** — a long-running autonomous bot gets one stable `agentId` (e.g. SNS name `trading-bot.sol`).
+- **Per-flow agent** — split an autonomous system into multiple agents by responsibility (e.g. `market-watcher.sol`, `executor.sol`).
+
+## On-chain agents on the Explorer
+
+The [public Explorer](https://voight.xyz/explore) indexes every agent registered on the Solana Agent Registry — including ones not using Voight for telemetry. Voight cross-references your agents with the Registry: if you register an agent on-chain (mint flow shipping in v1.0), it appears on the Explorer with on-chain reputation, capability declarations, and x402 payment rails.
+
+Agents stay private to your dashboard unless you opt-in to the Explorer by registering on-chain.
+
+## Soft delete + isolation
+
+When you delete an agent from the dashboard:
+
+- The agent is soft-deleted (`Agent.deletedAt` timestamp set, row not removed)
+- Subsequent events ingested for that `agentId` return `410 Gone` to the SDK
+- The agent disappears from all dashboard reads (events, sessions, traces, errors, alerts)
+- **Other agents from the same user keep ingesting normally** — isolation is per-agent, not per-API-key
+
+The delete flow requires typing the agent's displayName to confirm, modeled on the Sentry pattern. No undo.
+
+## Next
+
+<Card title="Events" icon="bolt" href="/concepts/events">
+  The atomic unit of Voight — every prompt, tool call, decision, transaction is an event.
+</Card>

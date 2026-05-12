@@ -1,0 +1,103 @@
+---
+title: Pricing
+description: "Built for teams ready to scale."
+---
+
+Three tiers. No per-event surprises. No enterprise gating of the basics.
+
+<CardGroup cols={3}>
+  <Card title="Free" icon="circle">
+    **$0**
+    forever
+    
+    - 10K events / month
+    - 7-day retention
+    - 3 agents
+    - Public Explorer presence
+    - Community Discord
+  </Card>
+  <Card title="Pro ★" icon="star">
+    **$19 / month flat**
+    
+    Built for teams ready to scale.
+    
+    - 300K events / month
+    - 90-day retention
+    - 15 agents
+    - Custom alerts
+    - Full audit export (PDF + JSON)
+    - Private agent option
+    - A/B agentic testing (coming soon)
+  </Card>
+  <Card title="Enterprise" icon="building">
+    **Custom**
+    
+    For regulated deployments and prop desks.
+    
+    **Everything in Pro, plus:**
+    - SLA & priority support
+    - SOC 2 Type II materials
+    - SSO & audit access controls
+    - Dedicated infrastructure
+    - Compliance exports (EU AI Act, SEC)
+  </Card>
+</CardGroup>
+
+## Founding members
+
+First 100 integrations receive **Pro free for 30 days**. Badge in Explorer.
+
+Today: **20 / 100 claimed**.
+
+## What's actually enforced today
+
+The quotas above are aspirational pre-launch. Today:
+
+- **Events ingestion**: rate-limited by burst (60/min Free, 600/min Pro) to prevent abuse. Monthly quotas not yet enforced server-side.
+- **Agents**: no hard cap today. The UI doesn't prevent you from creating more.
+- **Retention**: enforced. Events older than your tier's window are auto-purged.
+- **Custom alerts**: built-in rules (event surge, error rate, cost spike, orphan spike) work for all tiers. Custom rule creation is a Pro feature, ships v1.0.
+- **PDF audit exports**: CSV is shipped today (Overview + Audit log). PDF + JSON ship v1.0.
+
+Monthly event quotas + Stripe billing ship in **v1.0**.
+
+## What changes at each tier
+
+The runtime behaviour of the SDK is the same across all tiers. Pricing changes:
+
+- How much data Voight retains and surfaces
+- How many alert rules you can author
+- How many private (non-Explorer) agents you can run
+- Compliance materials availability
+
+## Self-hosting
+
+If you want to run Voight against your own infrastructure (private deployment, regulated environment), Enterprise customers get self-host runbooks + Helm charts. Reach out for details.
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="What counts as one event?">
+    Every `POST /v1/events` call. A single Claude Code session with 50 tool calls = 50 events + 1 prompt + 1 stop = ~52 events. An autonomous trading bot doing 10 swaps + 30 reasoning steps = ~40 events.
+
+    Rule of thumb: 1 event ≈ one row in the dashboard's audit log.
+  </Accordion>
+  <Accordion title="How do I upgrade from Free to Pro?">
+    Stripe checkout ships in v1.0. Today, [reach out](mailto:support@voight.xyz) for Founding Member status (Pro free for 30 days, first 100 integrations).
+  </Accordion>
+  <Accordion title="Can I downgrade?">
+    Yes, any time. Retention drops to the new tier's window on the next billing cycle. Events outside the new window get purged.
+  </Accordion>
+  <Accordion title="What happens if I exceed my event quota?">
+    Today: nothing — quotas are advisory. v1.0: events are rejected with `402 Payment Required` past quota; the dashboard shows a banner prompting upgrade.
+  </Accordion>
+  <Accordion title="Do you offer educational / non-profit discounts?">
+    Not yet. We're focused on making Free generous enough that most use cases fit. If 10K events / month isn't sufficient for an open-source / research project, [reach out](mailto:support@voight.xyz).
+  </Accordion>
+</AccordionGroup>
+
+## Next
+
+<Card title="Get started for free" icon="rocket" href="https://voight.xyz/dashboard">
+  Generate an API key and start streaming in under a minute. No card.
+</Card>

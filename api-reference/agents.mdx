@@ -1,0 +1,147 @@
+---
+title: Public agent endpoints
+description: "Read-only endpoints for the public Explorer — no auth required."
+---
+
+These endpoints serve the public [Explorer](https://voight.xyz/explore). No auth — anyone can read them, used to render agent listings, profiles, and cross-chain payment data.
+
+## GET /v1/stats
+
+Global aggregate stats across all agents.
+
+```bash
+curl https://voight-production.up.railway.app/v1/stats
+```
+
+Response:
+
+```json
+{
+  "agents": { "total": 1452, "identified": 944, "unknown": 508 },
+  "events24h": 48355,
+  "lastUpdated": "2026-05-12T14:02:54.084Z"
+}
+```
+
+## GET /v1/explorer
+
+The full Explorer homepage payload — top agents, collections, recent activity feed, x402 stats.
+
+```bash
+curl https://voight-production.up.railway.app/v1/explorer
+```
+
+Returns a large composite object. See the [Explorer page](https://voight.xyz/explore) for what each field renders.
+
+## GET /v1/agents
+
+Paginated list of agents marked `isPublic: true`. Used by the Explorer's main grid.
+
+```bash
+curl "https://voight-production.up.railway.app/v1/agents?limit=20&offset=0&search=eliza"
+```
+
+| Query param | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `limit` | int | 20 | Max 100 |
+| `offset` | int | 0 | For pagination |
+| `search` | string | — | Free-text match on agent name, snsName, or description |
+| `filter` | `all \| identified \| unknown` | `all` | Identified = has `enriched.profiled = true` |
+
+Response:
+
+```json
+{
+  "agents": [
+    {
+      "id": "cmoq...",
+      "snsName": "trading-bot.sol",
+      "displayName": "Voight dev agent",
+      "registryId": "...",  // Metaplex Core asset pubkey if on-chain
+      "reputationScore": 0.94,
+      "source": "agent-registry",
+      "metadata": { "agentUri": "...", "feedback_count": 0 },
+      "enriched": {
+        "name": "Voight dev agent",
+        "description": "...",
+        "image": "https://...",
+        "capabilities": ["..."],
+        "profiled": true
+      },
+      "lastSeenAt": "2026-05-12T13:55:21Z"
+    }
+  ],
+  "total": 1452,
+  "offset": 0
+}
+```
+
+## GET /v1/agents/:identifier
+
+Full public profile for a single agent.
+
+```bash
+curl https://voight-production.up.railway.app/v1/agents/trading-bot.sol
+curl https://voight-production.up.railway.app/v1/agents/cmoqgt7k8014msovgm35r2hwa
+```
+
+`identifier` can be:
+
+- A SNS domain (`trading-bot.sol`)
+- A Voight cuid (`cmoq...`)
+- A Metaplex Core asset pubkey if registered on-chain
+
+Response includes the full agent record plus aggregated public KPIs (events count, last activity, reputation) — without exposing your event content if you're the agent owner. Private fields stay private.
+
+## GET /v1/x402
+
+Proxy to x402scan data. Returns the live payment graph across Solana + Base.
+
+```bash
+curl https://voight-production.up.railway.app/v1/x402
+```
+
+Returns top sellers, recent transfers, and Coinbase Bazaar facilitator info. Used by the Explorer's x402 section.
+
+## POST /v1/waitlist
+
+Email capture from the landing page. Rate-limited 5/h per IP.
+
+```bash
+curl -X POST https://voight-production.up.railway.app/v1/waitlist \
+  -H "content-type: application/json" \
+  -d '{"email":"you@example.com","source":"landing"}'
+```
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `email` | string | Yes | Validated by Zod |
+| `source` | string | No | Free-form (`landing`, `docs`, etc.) — for analytics |
+| `metadata` | object | No | Anything else you want to attach |
+
+Response: `200 OK` with `{ ok: true }` if accepted, `429` if rate-limited.
+
+## GET /health
+
+Liveness probe — for monitoring tools or uptime checks.
+
+```bash
+curl https://voight-production.up.railway.app/health
+```
+
+Response:
+
+```json
+{
+  "status": "ok",
+  "service": "voight-api",
+  "uptime": 8234.5,
+  "version": "0.1.0"
+}
+```
+
+## Next
+
+<Card title="/v1/me/*" icon="lock" href="/api-reference/me">
+  Authenticated dashboard endpoints — events, sessions, traces, errors, alerts, keys.
+</Card>

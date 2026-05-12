@@ -1,0 +1,160 @@
+---
+title: /v1/me/* (authenticated)
+description: "The dashboard endpoints — your agents, events, sessions, traces, alerts, keys."
+---
+
+All `/me/*` endpoints require a Privy JWT (the dashboard auth token). The frontend handles this for you — these docs are for if you're building external tools that talk to your own Voight account.
+
+## Authentication
+
+```
+Authorization: Bearer <privy-jwt>
+```
+
+Get the JWT from your browser's dev tools while logged into the dashboard:
+
+```js
+// In the browser console at voight.xyz/dashboard
+const { getAccessToken } = window.__privy
+console.log(await getAccessToken())
+```
+
+JWTs expire in ~1 hour. Long-running scripts should re-fetch periodically. For programmatic / long-lived access, use an [API key](/api-reference/events) on `/v1/events` for ingestion or build a separate backend that signs Privy JWTs server-side.
+
+## Identity + profile
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/me` | Current user (id, privyId, email, wallet, handle) |
+| `PATCH` | `/me` | Update handle |
+
+```bash
+curl -H "Authorization: Bearer $JWT" https://voight-production.up.railway.app/v1/me
+```
+
+## Agents
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/me/agents` | List all your agents |
+| `GET` | `/me/agents/:id` | Full agent profile + 30-day calendar + KPIs + recent sessions / errors |
+| `PATCH` | `/me/agents/:id` | Edit displayName |
+| `DELETE` | `/me/agents/:id` | Soft-delete agent + block ingestion (returns 410 Gone going forward) |
+
+```bash
+curl -H "Authorization: Bearer $JWT" \
+  https://voight-production.up.railway.app/v1/me/agents
+```
+
+## Events
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/me/events?limit=N&since=24h\|7d\|30d\|all&agentId=cuid` | Stream of recent events (cap 1000) |
+
+Query params (all optional):
+
+| Param | Default | Notes |
+| --- | --- | --- |
+| `limit` | 50 | Clamped 1..1000 |
+| `since` | (none) | `24h`, `7d`, `30d`, `all`. Invalid values silently dropped. |
+| `agentId` | (none) | Filter by one agent. Must be a CUID. Non-CUID values silently dropped. |
+
+```bash
+curl -H "Authorization: Bearer $JWT" \
+  "https://voight-production.up.railway.app/v1/me/events?limit=100&since=24h"
+```
+
+## Sessions
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/me/sessions?limit=N` | Aggregated sessions (grouped by `sessionId`) |
+| `GET` | `/me/sessions/:id` | One session detail with all events |
+
+## Traces
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/me/traces?since=X` | Traces (grouped by `metadata.traceId`) |
+| `GET` | `/me/traces/:traceId` | One trace with full timeline + git context + privacy chips |
+
+## Errors
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/me/errors?since=X` | Error clusters (Sentry-style, grouped by fingerprint) |
+| `POST` | `/me/errors/:fingerprint/resolve` | Mark cluster resolved |
+| `DELETE` | `/me/errors/:fingerprint/resolve` | Re-open cluster |
+
+Clusters auto-reopen if a new event matches the fingerprint with `timestamp > resolvedAt`.
+
+## Alerts
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/me/alerts?status=X&count=Y` | Active / acknowledged / all alerts |
+| `POST` | `/me/alerts/:id/acknowledge` | Ack alert |
+| `POST` | `/me/alerts/:id/snooze` | Snooze N hours (`?hours=24`) |
+| `POST` | `/me/alerts/:id/unacknowledge` | Re-open alert |
+
+## API keys
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/me/keys` | Your API keys (prefix + label + lastUsedAt) |
+| `POST` | `/me/keys` | Create a new key. Returns the plaintext **once**. |
+| `DELETE` | `/me/keys/:id` | Revoke a key |
+
+```bash
+# Create
+curl -X POST -H "Authorization: Bearer $JWT" \
+  -H "content-type: application/json" \
+  -d '{"label":"My production bot"}' \
+  https://voight-production.up.railway.app/v1/me/keys
+
+# Response (only time you'll see the secret)
+# { "id": "...", "keyPrefix": "vk_abc12345", "secret": "vk_abc12345...full key...", "label": "My production bot" }
+```
+
+## Spend summary
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/me/spend-summary` | Aggregated cost across all your agents (used by Overview KPI) |
+
+Returns `{ total, by_agent: [...], by_model: [...], by_day: [...] }`.
+
+## Test event
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/me/test-event` | Create a synthetic event for onboarding/testing. Creates a placeholder agent if needed. |
+
+```bash
+curl -X POST -H "Authorization: Bearer $JWT" \
+  https://voight-production.up.railway.app/v1/me/test-event
+```
+
+The synthetic agent has `isPublic: false` and a recognizable `ownerWallet` (`voight:test:<userId>`) so it won't appear on the public Explorer.
+
+## Rate limits
+
+Per-user, per-endpoint. Reasonable defaults — if you hit a 429, back off. If you need higher limits for a specific use case, [reach out](mailto:support@voight.xyz).
+
+## Notes
+
+- All `/me/*` endpoints filter by `userId` server-side. Cross-user reads are impossible from the API.
+- Soft-deleted agents are filtered out of all reads (`deletedAt: null` filter). The 9 read queries that touch `Agent` enforce this; the mutation queries (alert ack/snooze) intentionally keep the filter absent so you can dismiss alerts for deleted agents.
+- Endpoint behavior is documented in source at [`apps/api/src/routes/me.ts`](https://github.com/Voightxyz/voight/blob/main/apps/api/src/routes/me.ts).
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="POST /v1/events" icon="bolt" href="/api-reference/events">
+    Event ingestion (API key auth, not JWT).
+  </Card>
+  <Card title="Public agents" icon="users" href="/api-reference/agents">
+    Read-only Explorer endpoints (no auth).
+  </Card>
+</CardGroup>

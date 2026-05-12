@@ -1,0 +1,75 @@
+---
+title: Sessions
+description: "One session = one Claude Code launch (or one autonomous bot run)."
+---
+
+A **session** in Voight is a group of events that share a `sessionId` — the lifetime of one Claude Code launch, one Cursor instance, or one autonomous bot run.
+
+## How sessions differ from traces
+
+| | Trace | Session |
+| --- | --- | --- |
+| **Boundary** | One user prompt → next user prompt | One process lifetime (Claude Code launch → exit) |
+| **Cardinality** | Many per session | One per process |
+| **Typical duration** | Seconds to minutes | Minutes to hours |
+| **What it groups** | All work the agent did for one ask | Everything that happened in one editor session |
+
+A session contains many traces. A trace contains many events.
+
+## Session lifecycle
+
+- **Claude Code**: opens a fresh `session_id` when you launch the editor or start a new chat. Every hook event during that run carries it.
+- **Library mode (autonomous bots)**: you control the session ID. Pass `metadata.sessionId` explicitly on each `voight.log()` call, or let the SDK group events by other means.
+
+## Sessions grouped by day
+
+If you launch Claude Code multiple times in the same day with the same project, each launch becomes its own session row. The dashboard's `/dashboard/sessions` page groups these by `(agentId, dayKey)`:
+
+- One card per agent per day
+- Badge `+N more` if there were multiple launches
+- Click to drill into the individual sessions
+
+This keeps the page scannable when you're running many short sessions.
+
+## Session detail page
+
+`/dashboard/sessions/<id>` shows:
+
+- Header: agent, start/end time, total duration, total events, errors, tx count
+- Timeline of all traces in the session
+- Inspector panel with aggregated KPIs (tokens, cost, p50/p95 latency)
+- Per-trace breakdown
+
+## Session status
+
+A session is one of:
+
+| Status | When |
+| --- | --- |
+| `active` | Last event < 5 minutes ago |
+| `idle` | Last event 5-30 minutes ago |
+| `done` | Last event > 30 minutes ago, no errors |
+| `errored` | Any event has `outcome: 'failed'` and not yet acknowledged |
+| `paused` | An anomaly alert paused the agent (autonomous flows) |
+
+## Filtering
+
+Available filters on `/dashboard/sessions`:
+
+- **Time window**: 24h / 7d / 30d / all
+- **Agent**: any agent in your account
+- **Status**: active / idle / done / errored
+
+The same FilterBar component drives Audit log + Overview live timeline, so once you learn it in one place it works everywhere.
+
+## API
+
+```bash
+curl -H "Authorization: Bearer $PRIVY_JWT" \
+  "https://voight-production.up.railway.app/v1/me/sessions?limit=50"
+
+curl -H "Authorization: Bearer $PRIVY_JWT" \
+  "https://voight-production.up.railway.app/v1/me/sessions/<id>"
+```
+
+See the [`/me/sessions` reference](/api-reference/me) for full schema.

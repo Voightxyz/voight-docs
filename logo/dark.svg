@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-label="Voight">
+  <g stroke="#ededf0" stroke-width="1.5" stroke-linecap="butt" fill="none">
+    <line x1="3.7" y1="3" x2="20.3" y2="3"/>
+    <line x1="2.8" y1="4.5" x2="11" y2="19"/>
+    <line x1="21.2" y1="4.5" x2="13" y2="19"/>
+  </g>
+</svg>

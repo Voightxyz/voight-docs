@@ -1,0 +1,98 @@
+---
+title: Traces
+description: "One trace = everything the agent did to answer one prompt."
+---
+
+A **trace** in Voight is a group of events that share a `traceId` — the agent's full response to one user prompt, from the first reasoning step to the final tool call.
+
+If you've used [Sentry](https://sentry.io), think of a trace like a transaction. If you've used [LangSmith](https://smith.langchain.com), think of it like a run. The shape is similar but Voight's traces are agent-stack-aware.
+
+## Trace lifecycle
+
+<Steps>
+  <Step title="UserPromptSubmit fires">
+    A new `traceId` is generated (`t_<base36-timestamp>_<8-hex-random>`) and persisted to `$TMPDIR/voight-traces/<sessionId>.txt`.
+  </Step>
+  <Step title="Tool events inherit the traceId">
+    PreToolUse, PostToolUse, and any reasoning steps read the file and stamp their events with the same `traceId`.
+  </Step>
+  <Step title="Stop event ends the trace">
+    The Stop hook fires when the agent's turn is done. The trace is complete.
+  </Step>
+  <Step title="Next UserPromptSubmit starts a new trace">
+    The file gets overwritten with a fresh `traceId`. The cycle repeats.
+  </Step>
+</Steps>
+
+This means **one trace = one logical "task" the agent worked on**, regardless of how many tool calls or reasoning steps it took.
+
+## What a trace looks like
+
+A trace card on `/dashboard/traces` shows:
+
+```
+● Voight dev agent                     49s ago
+  "refactor src/auth.ts to use JWT"
+  t_mp01q1r2_8e3...                            2m18s
+  9 tools · 0 err · 0 files
+```
+
+Clicking opens a full timeline of every event in the trace, with:
+
+- Prompt at the top (masked by default — click the eye to reveal)
+- Each tool call inline with timing + outcome
+- Reasoning steps interleaved
+- Cost USD aggregated
+- Files touched listed
+- Git context (branch + sha) pinned
+
+## Text-response traces
+
+If the agent answers conversationally (no tool calls), the trace contains only the prompt + a Stop event with `responseText`. The dashboard shows these as **"Text response"** traces with a distinct badge so you can scan past them quickly.
+
+## Wakeup / autonomous traces
+
+`ScheduleWakeup` callbacks (the autonomous-loop mechanism in Claude Code's `/loop` mode) arrive as `UserPromptSubmit` events. To distinguish them from real user prompts:
+
+- The SDK records the wakeup parameters (`delaySeconds`, `reason`) when the agent calls `ScheduleWakeup`
+- When the next `UserPromptSubmit` matches a pending wakeup, the event is tagged `promptSource: 'system'`
+- The dashboard renders these traces with a `SYSTEM` badge so you can spot autonomous loop ticks at a glance
+
+## Privacy chips per-trace
+
+Every event in a trace ships with `metadata.privacyLevel` (Minimal / Standard / Full). The dashboard renders a chip per-event so you can audit retroactively: did *this specific trace* get captured under the level I expected?
+
+Useful when you change your privacy level mid-project — the old events keep their chip, the new ones get the new level.
+
+## Trace search + filter
+
+The Traces page (`/dashboard/traces`) supports:
+
+- **Time window**: 24h / 7d / 30d / all
+- **Free-text search**: matches agent label, project path, prompt text, trace ID
+- **Per-card eye toggle**: reveal individual prompts without exposing all of them at once
+- **Global Show/Hide**: bulk reveal for private review, bulk hide before going on-camera
+
+Default is masked. Refresh / navigate-away resets to masked.
+
+## API
+
+To fetch traces programmatically:
+
+```bash
+curl -H "Authorization: Bearer $PRIVY_JWT" \
+  "https://voight-production.up.railway.app/v1/me/traces?since=7d"
+```
+
+See the [`/me/traces` reference](/api-reference/me) for full schema.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Sessions" icon="layer-group" href="/concepts/sessions">
+    Group traces by session — one session = one Claude Code launch.
+  </Card>
+  <Card title="Events" icon="bolt" href="/concepts/events">
+    The atomic unit — every event has a traceId stamp.
+  </Card>
+</CardGroup>

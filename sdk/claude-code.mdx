@@ -1,0 +1,137 @@
+---
+title: Claude Code
+description: "Wire Voight into Claude Code in one paste."
+---
+
+Claude Code is the **verified install path** for Voight today. The SDK ships with first-class support: one command wires up all 7 hook events, the privacy wizard runs interactively, and every prompt + tool call + bash + edit streams to your dashboard with no code changes.
+
+## Install
+
+```bash
+npx -y @voightxyz/sdk setup
+```
+
+The wizard:
+
+1. Asks for a privacy level (Minimal / Standard / Full)
+2. Asks for your API key (`vk_...`)
+3. Writes hooks + env into `~/.claude/settings.json`
+4. Confirms with a celebration screen
+
+## What gets wired
+
+The setup writes:
+
+```json
+{
+  "env": {
+    "VOIGHT_KEY": "vk_...",
+    "VOIGHT_PRIVACY": "standard"
+  },
+  "hooks": {
+    "PreToolUse":     [{ "matcher": "*", "hooks": [{ "type": "command", "command": "npx -y @voightxyz/sdk hook" }] }],
+    "PostToolUse":    [{ "matcher": "*", "hooks": [{ "type": "command", "command": "npx -y @voightxyz/sdk hook" }] }],
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "npx -y @voightxyz/sdk hook" }] }],
+    "Stop":             [{ "hooks": [{ "type": "command", "command": "npx -y @voightxyz/sdk hook" }] }],
+    "SubagentStop":     [{ "hooks": [{ "type": "command", "command": "npx -y @voightxyz/sdk hook" }] }],
+    "Notification":     [{ "hooks": [{ "type": "command", "command": "npx -y @voightxyz/sdk hook" }] }],
+    "PreCompact":       [{ "hooks": [{ "type": "command", "command": "npx -y @voightxyz/sdk hook" }] }]
+  }
+}
+```
+
+Idempotent — re-running setup doesn't duplicate entries.
+
+## How it works
+
+For every Claude Code lifecycle event:
+
+1. Claude Code spawns `npx -y @voightxyz/sdk hook` as a subprocess
+2. The hook reads the event JSON from stdin
+3. Hook resolves your identity (`VOIGHT_AGENT_ID` env → `.voight-agent-id` marker → `claude-code:<folder>` fallback)
+4. Hook resolves your privacy level from `VOIGHT_PRIVACY` env
+5. Hook maps the event to a Voight payload, scrubs / filters per level, POSTs to `/v1/events`
+6. Hook never throws — failures swallowed so they can't crash Claude Code
+
+The subprocess is short-lived (typically <300ms). It writes diagnostic state to `$TMPDIR/voight-{traces,hooks,tokens,wakeup,git}/`.
+
+## Non-TTY install (chat / CI / agent)
+
+When `stdin` isn't an interactive TTY, the wizard runs in **3-step progressive mode**:
+
+```bash
+# Step 1 — privacy menu
+npx -y @voightxyz/sdk setup
+# (shows menu, exits with prompt to re-run with --privacy=N)
+
+# Step 2 — API key instructions
+npx -y @voightxyz/sdk setup --privacy=2
+# (shows instructions, exits with prompt to re-run with --key=...)
+
+# Step 3 — complete setup
+npx -y @voightxyz/sdk setup --privacy=2 --key=vk_YOUR_KEY
+```
+
+Each step prints clear instructions and exits cleanly. AI agents reading the output can chain the commands automatically.
+
+## Env var overrides
+
+Override any setting via env without re-running setup:
+
+```bash
+VOIGHT_KEY=vk_xxx          # API key
+VOIGHT_PRIVACY=minimal     # privacy level for this session
+VOIGHT_AGENT_ID=my-id      # explicit agent identity
+VOIGHT_ENDPOINT=http://... # self-host the backend
+VOIGHT_NO_TRANSCRIPT=1     # disable token capture from transcripts
+VOIGHT_NO_TRANSCRIPT_TEXT=1  # capture tokens but not response text
+VOIGHT_NO_THINKING=1       # don't capture extended-thinking blocks
+VOIGHT_DEBUG_FILE=/tmp/v.log  # write diagnostic logs for debugging
+```
+
+Env vars take precedence over `settings.json` values.
+
+## Multiple Claude Code installs
+
+The SDK's identity resolution is folder-aware. Different projects get different agents:
+
+- `/Users/me/project-a/` → marker file `.voight-agent-id` → agent A
+- `/Users/me/project-b/` → marker file `.voight-agent-id` → agent B
+- Cross-project events get attributed correctly
+
+To share one agent across folders, set `VOIGHT_AGENT_ID` env var in your shell rc.
+
+## Updates
+
+Re-run setup any time to update settings:
+
+```bash
+npx -y @voightxyz/sdk setup
+```
+
+If you want a specific SDK version (e.g. to avoid npx caching):
+
+```bash
+npx -y @voightxyz/sdk@0.4.2 setup
+```
+
+## Verified vs scaffolded targets
+
+| Target | Status |
+| --- | --- |
+| Claude Code (`--target=claude`) | ✅ Verified — production install path |
+| Cursor (`--target=cursor`) | 🟡 Scaffolded, validation in flight |
+| Codex (`--target=codex`) | 🟡 Scaffolded, validation in flight |
+
+Targets for Gemini, Replit Agent, and other coding-agent surfaces are on the roadmap.
+
+## Next
+
+<CardGroup cols={2}>
+  <Card title="Library mode" icon="cube" href="/sdk/library-mode">
+    For autonomous agents you build yourself.
+  </Card>
+  <Card title="HTTP API" icon="globe" href="/sdk/http-api">
+    For runtimes that don't use npm.
+  </Card>
+</CardGroup>
