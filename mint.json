@@ -8,12 +8,12 @@
   },
   "favicon": "/favicon.svg",
   "colors": {
-    "primary": "#7be3a0",
-    "light": "#9aeab5",
-    "dark": "#5cc787",
+    "primary": "#e5e6ea",
+    "light": "#f0f1f3",
+    "dark": "#bcbfc4",
     "anchors": {
-      "from": "#7be3a0",
-      "to": "#5cc787"
+      "from": "#e5e6ea",
+      "to": "#bcbfc4"
     },
     "background": {
       "dark": "#0a0a0f"
@@ -67,30 +67,25 @@
         "concepts/agents",
         "concepts/events",
         "concepts/traces",
-        "concepts/sessions"
+        "concepts/sessions",
+        "privacy/overview"
       ]
     },
     {
-      "group": "Privacy & data",
-      "pages": [
-        "privacy/overview",
-        "privacy/pii-patterns",
-        "privacy/data-handling"
-      ]
-    },
-    {
-      "group": "SDK",
+      "group": "Install paths",
       "pages": [
         "sdk/library-mode",
         "sdk/http-api"
       ]
     },
     {
-      "group": "API reference",
+      "group": "Reference",
       "pages": [
         "api-reference/events",
         "api-reference/agents",
-        "api-reference/me"
+        "api-reference/me",
+        "privacy/pii-patterns",
+        "privacy/data-handling"
       ]
     },
     {
