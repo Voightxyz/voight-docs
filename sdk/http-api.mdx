@@ -3,7 +3,7 @@ title: HTTP API
 description: "For any runtime that can POST JSON."
 ---
 
-If you can't or don't want to add a dependency, Voight accepts raw HTTP `POST` from any runtime — curl, Python, Go, Rust, browsers, embedded devices, anything that speaks JSON over HTTPS.
+Voight accepts raw HTTP `POST` from any runtime that speaks JSON over HTTPS — curl, Python, Go, Rust, browsers, embedded devices. No dependency required.
 
 ## Endpoint
 
@@ -84,9 +84,9 @@ All fields except `agentId` are optional. The server defaults `type: 'decision'`
 
 The HTTP path **does not** apply PII scrubbing — that's a client-side operation that requires the SDK. If you're calling HTTP directly, you're responsible for scrubbing sensitive content before it leaves your machine.
 
-To make Voight respect privacy controls on HTTP events, include `metadata.privacyLevel: 'minimal' | 'standard' | 'full'` so the dashboard can chip them correctly. The scrubbing itself is your responsibility.
+To have the dashboard render audit chips on HTTP events, include `metadata.privacyLevel: 'minimal' | 'standard' | 'full'`. The scrubbing itself is your responsibility on this path.
 
-For most use cases, the [library mode SDK](/sdk/library-mode) is the right call — `import { scrubPii } from '@voightxyz/sdk'` gives you the same scrubbing without adopting the hook handler.
+If you're already on Node, [library mode](/sdk/library-mode) exposes `scrubPii()` directly — same patterns, no hook handler required.
 
 ## Examples
 
@@ -208,11 +208,5 @@ Quotas are advisory today, enforced server-side starting v1.0. Burst rate-limiti
 
 ## Next
 
-<CardGroup cols={2}>
-  <Card title="Library mode" icon="cube" href="/sdk/library-mode">
-    For JS/TS — gives you retry, error types, and PII scrubbing for free.
-  </Card>
-  <Card title="POST /v1/events reference" icon="bolt" href="/api-reference/events">
-    Full schema definition with every field documented.
-  </Card>
-</CardGroup>
+- [Library mode](/sdk/library-mode) — for JS/TS; adds retry, typed errors, and PII scrubbing
+- [`POST /v1/events` reference](/api-reference/events) — full schema with every field documented

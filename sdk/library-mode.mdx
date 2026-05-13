@@ -3,7 +3,7 @@ title: Library mode
 description: "Import @voightxyz/sdk in TypeScript/JavaScript agents you build yourself."
 ---
 
-For autonomous agents, trading bots, ElizaOS characters, Solana Agent Kit flows, or anything you build in TS/JS — import the library directly.
+For agents you build yourself in TypeScript or JavaScript — autonomous bots, trading agents, ElizaOS characters, Solana Agent Kit flows — import the SDK and call `voight.log()` directly.
 
 ## Install
 
@@ -38,18 +38,6 @@ await voight.log({
 Returns `{ ok: true, eventId, agentId }` on success, `{ ok: false, error: { code, message } }` on failure.
 
 ## Constructor options
-
-```ts
-interface VoightOptions {
-  agentId: string                   // required
-  apiKey: string                    // required
-  endpoint?: string                 // default: production
-  defaults?: Record<string, unknown>  // merged into every event's metadata
-  swallowErrors?: boolean           // default: true
-  fetch?: typeof fetch              // override (for tests / older runtimes)
-  privacyLevel?: PrivacyLevel       // override the per-event privacy level
-}
-```
 
 | Option | Type | Default | Purpose |
 | --- | --- | --- | --- |
@@ -230,11 +218,5 @@ Today these return `{ allow: true, reason: 'not-implemented' }` so you can instr
 
 ## Next
 
-<CardGroup cols={2}>
-  <Card title="HTTP API" icon="globe" href="/sdk/http-api">
-    For runtimes that don't use npm at all.
-  </Card>
-  <Card title="POST /v1/events" icon="bolt" href="/api-reference/events">
-    Full HTTP API schema for events ingestion.
-  </Card>
-</CardGroup>
+- [HTTP API](/sdk/http-api) — for runtimes that don't use npm at all
+- [`POST /v1/events`](/api-reference/events) — full HTTP API schema for event ingestion
