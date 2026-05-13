@@ -3,27 +3,19 @@ title: Agents
 description: "What an agent is in Voight, how identity is tracked, and how multi-agent setups work."
 ---
 
-An **agent** in Voight is any entity that produces traceable events — your Claude Code session, your Cursor instance, an autonomous DeFi bot, an ElizaOS character, anything that calls `voight.log()` or wires the SDK hook.
+An **agent** is any entity that produces events — a coding agent session, an autonomous bot, an ElizaOS character, anything that calls `voight.log()` or has the SDK wired in.
 
 ## Agent identity
 
 Each agent has a unique `id` (a [cuid](https://github.com/paralleldrive/cuid2)) assigned by the server the first time it's seen. From that point on, the SDK matches events to that agent by `id`, not by name — meaning **renaming or moving the project folder doesn't break the timeline**.
 
-How identity is resolved by the SDK, in order:
+How identity is resolved by the SDK, in priority order:
 
-<Steps>
-  <Step title="VOIGHT_AGENT_ID env override">
-    Explicit override. Highest priority. Useful for CI / multi-agent setups where you want to control identity from outside.
-  </Step>
-  <Step title=".voight-agent-id marker file">
-    A plain-text file in your project's cwd holding the cuid. Written by the SDK after the first successful event so subsequent events match by primary key.
-  </Step>
-  <Step title="Framework label fallback">
-    `claude-code:<folder-basename>` for first-time installs, `claude-code:<session-slice>` if cwd is unavailable.
-  </Step>
-</Steps>
+1. **`VOIGHT_AGENT_ID` env override** — explicit, highest priority. Useful for CI and multi-agent setups where identity is controlled from outside.
+2. **`.voight-agent-id` marker file** — a plain-text file in the project's cwd holding the cuid. Written by the SDK after the first successful event so subsequent events match by primary key.
+3. **Framework label fallback** — `claude-code:<folder-basename>` for first-time installs, `claude-code:<session-slice>` if cwd is unavailable.
 
-The server normalises: if it sees a known cuid, it matches by `id`. Otherwise it tries `snsName`, then `displayName`, and finally creates a new agent row.
+The server normalises: known cuid → match by `id`; otherwise try `snsName`, then `displayName`, then create a new agent row.
 
 ## How agents are created
 
@@ -67,10 +59,10 @@ When you delete an agent from the dashboard:
 - The agent disappears from all dashboard reads (events, sessions, traces, errors, alerts)
 - **Other agents from the same user keep ingesting normally** — isolation is per-agent, not per-API-key
 
-The delete flow requires typing the agent's displayName to confirm, modeled on the Sentry pattern. No undo.
+The delete flow requires typing the agent's displayName to confirm. No undo.
 
 ## Next
 
-<Card title="Events" icon="bolt" href="/concepts/events">
-  The atomic unit of Voight — every prompt, tool call, decision, transaction is an event.
-</Card>
+- [Events](/concepts/events) — the atomic unit; every prompt, tool call, decision, transaction is one event
+- [Traces](/concepts/traces) — events grouped by `traceId`, one trace per agent turn
+- [Sessions](/concepts/sessions) — traces grouped by `sessionId`, one session per process lifetime

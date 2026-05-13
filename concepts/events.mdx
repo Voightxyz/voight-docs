@@ -59,14 +59,14 @@ Every event includes:
 ## What gets captured at each privacy level
 
 | Field | Minimal | Standard | Full |
-| --- | --- | --- | --- |
-| `toolExecuted`, `outcome`, `durationMs` | ✅ | ✅ | ✅ |
-| `tokens`, `metadata.tokensBreakdown`, `model` | ✅ | ✅ | ✅ |
-| `metadata.sessionId`, `metadata.traceId`, `metadata.phase` | ✅ | ✅ | ✅ |
-| `reasoning`, `metadata.detail` | ❌ | ✅ scrubbed | ✅ raw |
-| `errorMessage`, `metadata.response_preview` | ❌ | ✅ scrubbed | ✅ raw |
-| `metadata.cwd`, `metadata.git` | ❌ | ✅ | ✅ |
-| `input.prompt`, Stop event `responseText`/`thinkingPreview` | ❌ | ✅ scrubbed | ✅ raw |
+| --- | :---: | :---: | :---: |
+| `toolExecuted`, `outcome`, `durationMs` | ✓ | ✓ | ✓ |
+| `tokens`, `metadata.tokensBreakdown`, `model` | ✓ | ✓ | ✓ |
+| `metadata.sessionId`, `metadata.traceId`, `metadata.phase` | ✓ | ✓ | ✓ |
+| `reasoning`, `metadata.detail` | ✗ | ✓ scrubbed | ✓ raw |
+| `errorMessage`, `metadata.response_preview` | ✗ | ✓ scrubbed | ✓ raw |
+| `metadata.cwd`, `metadata.git` | ✗ | ✓ | ✓ |
+| `input.prompt`, Stop event `responseText`/`thinkingPreview` | ✗ | ✓ scrubbed | ✓ raw |
 
 Token counts and USD spend are pure numerics — they pass through every level unchanged. The dashboard's KPIs and charts work identically regardless of which level you pick. See the [privacy overview](/privacy/overview) for the full breakdown.
 
@@ -106,11 +106,5 @@ The dashboard pairs them by fingerprint and renders one row per tool call, with 
 
 ## Next
 
-<CardGroup cols={2}>
-  <Card title="Traces" icon="diagram-project" href="/concepts/traces">
-    Group events by trace ID — one trace = everything the agent did to answer one prompt.
-  </Card>
-  <Card title="Sessions" icon="layer-group" href="/concepts/sessions">
-    Group events by session ID — one session = one Claude Code launch / one bot run.
-  </Card>
-</CardGroup>
+- [Traces](/concepts/traces) — events grouped by `traceId`, one trace = one agent turn
+- [Sessions](/concepts/sessions) — events grouped by `sessionId`, one session = one process lifetime

@@ -3,28 +3,16 @@ title: Traces
 description: "One trace = everything the agent did to answer one prompt."
 ---
 
-A **trace** in Voight is a group of events that share a `traceId` — the agent's full response to one user prompt, from the first reasoning step to the final tool call.
-
-If you've used [Sentry](https://sentry.io), think of a trace like a transaction. If you've used [LangSmith](https://smith.langchain.com), think of it like a run. The shape is similar but Voight's traces are agent-stack-aware.
+A **trace** is a group of events that share a `traceId` — the agent's full response to one user prompt, from the first reasoning step to the final tool call.
 
 ## Trace lifecycle
 
-<Steps>
-  <Step title="UserPromptSubmit fires">
-    A new `traceId` is generated (`t_<base36-timestamp>_<8-hex-random>`) and persisted to `$TMPDIR/voight-traces/<sessionId>.txt`.
-  </Step>
-  <Step title="Tool events inherit the traceId">
-    PreToolUse, PostToolUse, and any reasoning steps read the file and stamp their events with the same `traceId`.
-  </Step>
-  <Step title="Stop event ends the trace">
-    The Stop hook fires when the agent's turn is done. The trace is complete.
-  </Step>
-  <Step title="Next UserPromptSubmit starts a new trace">
-    The file gets overwritten with a fresh `traceId`. The cycle repeats.
-  </Step>
-</Steps>
+1. **`UserPromptSubmit` fires** — a new `traceId` is generated (`t_<base36-timestamp>_<8-hex-random>`) and persisted to `$TMPDIR/voight-traces/<sessionId>.txt`.
+2. **Tool events inherit the `traceId`** — `PreToolUse`, `PostToolUse`, and any reasoning steps read the file and stamp their events with the same `traceId`.
+3. **`Stop` event ends the trace** — the Stop hook fires when the agent's turn is done.
+4. **Next `UserPromptSubmit` starts a new trace** — the file is overwritten with a fresh `traceId`. The cycle repeats.
 
-This means **one trace = one logical "task" the agent worked on**, regardless of how many tool calls or reasoning steps it took.
+One trace equals one logical task the agent worked on, regardless of how many tool calls or reasoning steps it took.
 
 ## What a trace looks like
 
@@ -88,11 +76,5 @@ See the [`/me/traces` reference](/api-reference/me) for full schema.
 
 ## Next
 
-<CardGroup cols={2}>
-  <Card title="Sessions" icon="layer-group" href="/concepts/sessions">
-    Group traces by session — one session = one Claude Code launch.
-  </Card>
-  <Card title="Events" icon="bolt" href="/concepts/events">
-    The atomic unit — every event has a traceId stamp.
-  </Card>
-</CardGroup>
+- [Sessions](/concepts/sessions) — traces grouped by `sessionId`, one session per process lifetime
+- [Events](/concepts/events) — the atomic unit; every event carries a `traceId`
