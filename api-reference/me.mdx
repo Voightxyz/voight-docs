@@ -29,7 +29,7 @@ JWTs expire in ~1 hour. Long-running scripts should re-fetch periodically. For p
 | `PATCH` | `/me` | Update handle |
 
 ```bash
-curl -H "Authorization: Bearer $JWT" https://voight-production.up.railway.app/v1/me
+curl -H "Authorization: Bearer $JWT" https://api.voight.xyz/v1/me
 ```
 
 ## Agents
@@ -43,7 +43,7 @@ curl -H "Authorization: Bearer $JWT" https://voight-production.up.railway.app/v1
 
 ```bash
 curl -H "Authorization: Bearer $JWT" \
-  https://voight-production.up.railway.app/v1/me/agents
+  https://api.voight.xyz/v1/me/agents
 ```
 
 ## Events
@@ -62,7 +62,7 @@ Query params (all optional):
 
 ```bash
 curl -H "Authorization: Bearer $JWT" \
-  "https://voight-production.up.railway.app/v1/me/events?limit=100&since=24h"
+  "https://api.voight.xyz/v1/me/events?limit=100&since=24h"
 ```
 
 ## Sessions
@@ -111,7 +111,7 @@ Clusters auto-reopen if a new event matches the fingerprint with `timestamp > re
 curl -X POST -H "Authorization: Bearer $JWT" \
   -H "content-type: application/json" \
   -d '{"label":"My production bot"}' \
-  https://voight-production.up.railway.app/v1/me/keys
+  https://api.voight.xyz/v1/me/keys
 
 # Response (only time you'll see the secret)
 # { "id": "...", "keyPrefix": "vk_abc12345", "secret": "vk_abc12345...full key...", "label": "My production bot" }
@@ -133,7 +133,7 @@ Returns `{ total, by_agent: [...], by_model: [...], by_day: [...] }`.
 
 ```bash
 curl -X POST -H "Authorization: Bearer $JWT" \
-  https://voight-production.up.railway.app/v1/me/test-event
+  https://api.voight.xyz/v1/me/test-event
 ```
 
 The synthetic agent has `isPublic: false` and a recognizable `ownerWallet` (`voight:test:<userId>`) so it won't appear on the public Explorer.

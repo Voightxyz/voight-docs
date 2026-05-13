@@ -8,7 +8,7 @@ Voight accepts raw HTTP `POST` from any runtime that speaks JSON over HTTPS — 
 ## Endpoint
 
 ```
-POST https://voight-production.up.railway.app/v1/events
+POST https://api.voight.xyz/v1/events
 ```
 
 ## Authentication
@@ -23,7 +23,7 @@ Generate your `vk_` key at [voight.xyz/dashboard/settings](https://voight.xyz/da
 ## Minimal payload
 
 ```bash
-curl https://voight-production.up.railway.app/v1/events \
+curl https://api.voight.xyz/v1/events \
   -H "authorization: Bearer $VOIGHT_KEY" \
   -H "content-type: application/json" \
   -d '{
@@ -98,7 +98,7 @@ import os
 
 def log_event(payload):
     response = requests.post(
-        "https://voight-production.up.railway.app/v1/events",
+        "https://api.voight.xyz/v1/events",
         headers={
             "authorization": f"Bearer {os.environ['VOIGHT_KEY']}",
             "content-type": "application/json",
@@ -133,7 +133,7 @@ import (
 func logEvent(payload map[string]any) error {
     body, _ := json.Marshal(payload)
     req, _ := http.NewRequest("POST",
-        "https://voight-production.up.railway.app/v1/events",
+        "https://api.voight.xyz/v1/events",
         bytes.NewBuffer(body))
     req.Header.Set("Authorization", "Bearer "+os.Getenv("VOIGHT_KEY"))
     req.Header.Set("Content-Type", "application/json")
@@ -155,7 +155,7 @@ use serde_json::json;
 async fn log_event(payload: serde_json::Value) -> reqwest::Result<()> {
     let client = Client::new();
     let api_key = std::env::var("VOIGHT_KEY").unwrap();
-    client.post("https://voight-production.up.railway.app/v1/events")
+    client.post("https://api.voight.xyz/v1/events")
         .bearer_auth(&api_key)
         .json(&payload)
         .send()
@@ -168,7 +168,7 @@ async fn log_event(payload: serde_json::Value) -> reqwest::Result<()> {
 ### Browser / fetch
 
 ```ts
-await fetch('https://voight-production.up.railway.app/v1/events', {
+await fetch('https://api.voight.xyz/v1/events', {
   method: 'POST',
   headers: {
     'authorization': `Bearer ${VOIGHT_KEY}`,

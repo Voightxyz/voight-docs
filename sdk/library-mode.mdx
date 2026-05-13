@@ -43,7 +43,7 @@ Returns `{ ok: true, eventId, agentId }` on success, `{ ok: false, error: { code
 | --- | --- | --- | --- |
 | `agentId` | string | — | Your agent's stable identifier. Recommend a SNS domain for autonomous bots (`trading-bot.sol`), a stable label for services (`market-watcher`). |
 | `apiKey` | string | — | From the dashboard. Required for ingestion. |
-| `endpoint` | string | `https://voight-production.up.railway.app` | Override for self-hosted deployments. |
+| `endpoint` | string | `https://api.voight.xyz` | Override for self-hosted deployments. |
 | `defaults` | object | `{}` | Metadata merged into every event (e.g. `{ env: 'prod', region: 'us-east' }`). |
 | `swallowErrors` | boolean | `true` | When true, `voight.log()` never throws — failures return `{ ok: false }`. Recommended for production. |
 | `fetch` | function | `globalThis.fetch` | Inject a custom fetch (for tests, older runtimes). |

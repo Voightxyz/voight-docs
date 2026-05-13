@@ -44,7 +44,7 @@ Full reference in [Library mode](/sdk/library-mode).
 For Python, Go, Rust, or anything that speaks JSON — POST events directly, no SDK required.
 
 ```bash
-curl https://voight-production.up.railway.app/v1/events \
+curl https://api.voight.xyz/v1/events \
   -H "authorization: Bearer $VOIGHT_KEY" \
   -H "content-type: application/json" \
   -d '{ "kind": "decision", "agentId": "my-agent", "input": "hello" }'

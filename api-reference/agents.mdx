@@ -10,7 +10,7 @@ These endpoints serve the public [Explorer](https://voight.xyz/explore). No auth
 Global aggregate stats across all agents.
 
 ```bash
-curl https://voight-production.up.railway.app/v1/stats
+curl https://api.voight.xyz/v1/stats
 ```
 
 Response:
@@ -28,7 +28,7 @@ Response:
 The full Explorer homepage payload — top agents, collections, recent activity feed, x402 stats.
 
 ```bash
-curl https://voight-production.up.railway.app/v1/explorer
+curl https://api.voight.xyz/v1/explorer
 ```
 
 Returns a large composite object. See the [Explorer page](https://voight.xyz/explore) for what each field renders.
@@ -38,7 +38,7 @@ Returns a large composite object. See the [Explorer page](https://voight.xyz/exp
 Paginated list of agents marked `isPublic: true`. Used by the Explorer's main grid.
 
 ```bash
-curl "https://voight-production.up.railway.app/v1/agents?limit=20&offset=0&search=eliza"
+curl "https://api.voight.xyz/v1/agents?limit=20&offset=0&search=eliza"
 ```
 
 | Query param | Type | Default | Notes |
@@ -81,8 +81,8 @@ Response:
 Full public profile for a single agent.
 
 ```bash
-curl https://voight-production.up.railway.app/v1/agents/trading-bot.sol
-curl https://voight-production.up.railway.app/v1/agents/cmoqgt7k8014msovgm35r2hwa
+curl https://api.voight.xyz/v1/agents/trading-bot.sol
+curl https://api.voight.xyz/v1/agents/cmoqgt7k8014msovgm35r2hwa
 ```
 
 `identifier` can be:
@@ -98,7 +98,7 @@ Response includes the full agent record plus aggregated public KPIs (events coun
 Proxy to x402scan data. Returns the live payment graph across Solana + Base.
 
 ```bash
-curl https://voight-production.up.railway.app/v1/x402
+curl https://api.voight.xyz/v1/x402
 ```
 
 Returns top sellers, recent transfers, and Coinbase Bazaar facilitator info. Used by the Explorer's x402 section.
@@ -108,7 +108,7 @@ Returns top sellers, recent transfers, and Coinbase Bazaar facilitator info. Use
 Email capture from the landing page. Rate-limited 5/h per IP.
 
 ```bash
-curl -X POST https://voight-production.up.railway.app/v1/waitlist \
+curl -X POST https://api.voight.xyz/v1/waitlist \
   -H "content-type: application/json" \
   -d '{"email":"you@example.com","source":"landing"}'
 ```
@@ -126,7 +126,7 @@ Response: `200 OK` with `{ ok: true }` if accepted, `429` if rate-limited.
 Liveness probe — for monitoring tools or uptime checks.
 
 ```bash
-curl https://voight-production.up.railway.app/health
+curl https://api.voight.xyz/health
 ```
 
 Response:
