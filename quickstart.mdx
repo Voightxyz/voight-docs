@@ -3,13 +3,9 @@ title: Quickstart
 description: "Get events from your agent into the Voight dashboard in 30 seconds."
 ---
 
-Voight works with any agent stack — coding assistants, autonomous frameworks, and custom runtimes. Pick the install path that fits yours; the dashboard, the privacy model, and the API are the same on every path.
+Voight works with any agent stack — coding assistants, autonomous frameworks, and custom runtimes. Pick the install path that fits yours; the dashboard, the privacy model, and the API are identical on every path.
 
-## Step 1 — Generate an API key
-
-Open [voight.xyz/dashboard/settings](https://voight.xyz/dashboard/settings) and click **+ Generate key**. Copy the `vk_...` secret. **You'll only see it once** — save it to a password manager.
-
-## Step 2 — Pick your install path
+## Step 1 — Install
 
 ### A · Coding agent (Claude Code, Cursor, Codex…)
 
@@ -18,8 +14,6 @@ A wizard writes the right hooks and env into your IDE's config. No code changes.
 ```bash
 npx -y @voightxyz/sdk setup
 ```
-
-It asks for a [privacy level](/privacy/overview), accepts your API key, and wires up the lifecycle hooks. Idempotent — safe to re-run.
 
 Verified today for **Claude Code**. Cursor and Codex targets are scaffolded — see [SDK targets](/sdk/library-mode#verified-vs-scaffolded-targets).
 
@@ -40,7 +34,6 @@ await voight.log({
   kind: 'decision',
   agentId: 'my-trading-bot',
   input: 'should I rebalance?',
-  metadata: { confidence: 0.82 },
 })
 ```
 
@@ -48,46 +41,58 @@ Full reference in [Library mode](/sdk/library-mode).
 
 ### C · Any language over HTTP
 
-If your runtime isn't Node — Python, Go, Rust, anything that speaks JSON — POST events directly. No SDK required.
+For Python, Go, Rust, or anything that speaks JSON — POST events directly, no SDK required.
 
 ```bash
 curl https://voight-production.up.railway.app/v1/events \
   -H "authorization: Bearer $VOIGHT_KEY" \
   -H "content-type: application/json" \
-  -d '{
-    "kind": "decision",
-    "agentId": "my-agent",
-    "input": "hello world"
-  }'
+  -d '{ "kind": "decision", "agentId": "my-agent", "input": "hello" }'
 ```
 
 Full schema in the [HTTP API reference](/api-reference/events).
 
-## Step 3 — Verify in the dashboard
+## Step 2 — Pick your privacy level
+
+For path A the wizard prompts you. For paths B and C you pass it on `voight.init({ privacy: 'standard' })` or per-request.
+
+- **Minimal** — metadata only. No prompts, responses, file paths, cwd, or git context leave your machine.
+- **Standard** ★ — full content with local PII scrubbing. Credentials and personal info redacted before transmission.
+- **Full** — everything captured as-is.
+
+The [privacy overview](/privacy/overview) breaks down what each level keeps, scrubs, or drops, field by field.
+
+## Step 3 — Generate your API key
+
+When the wizard asks for a key — or before you initialize the library / send your first request — open [voight.xyz/dashboard/settings](https://voight.xyz/dashboard/settings) and click **+ Generate key**. Copy the `vk_...` secret. **You'll only see it once**, so save it to a password manager.
+
+Paste it into the wizard, or set it as `VOIGHT_KEY` in your runtime environment.
+
+## Step 4 — You're connected
 
 Open [voight.xyz/dashboard](https://voight.xyz/dashboard). Within seconds you should see:
 
 - A new agent in the **Agents** list (auto-named from your install path, renameable)
-- Events streaming in the **Overview** and **Audit log**
+- Events streaming in **Overview** and **Audit log**
 - Token counts, cost USD, and model tags on each event
 - A per-event privacy chip (`MIN` / `STD` / `FULL`) confirming which level captured it
 
 ## Non-TTY install for path A
 
-If `stdin` isn't an interactive TTY (running the wizard from inside a chat agent, CI, or any non-interactive shell), the setup runs in **3-step progressive mode**:
+If `stdin` isn't an interactive TTY (running the wizard from inside a chat agent, CI, or any non-interactive shell), setup runs in **3-step progressive mode** instead of an interactive prompt:
 
 ```bash
-# Step 1 — see the menu
+# See the menu
 npx -y @voightxyz/sdk setup
 
-# Step 2 — pick a privacy level
+# Pick a privacy level
 npx -y @voightxyz/sdk setup --privacy=2
 
-# Step 3 — paste your key
+# Paste your key
 npx -y @voightxyz/sdk setup --privacy=2 --key=vk_YOUR_KEY
 ```
 
-Each step prints instructions and exits cleanly. Chains naturally for both humans and AI agents reading the output.
+Each step prints instructions and exits cleanly. The chain reads naturally for both humans and AI agents.
 
 ## Troubleshooting
 
