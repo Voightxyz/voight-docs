@@ -7,6 +7,56 @@ SDK releases follow [semver](https://semver.org/). Backend and dashboard ship co
 
 ## SDK changelog
 
+### 0.6.3 — 2026-05-14
+
+**Fix: Codex plugin install lands in the right cache dir + valid auth enum.**
+
+Two last-mile Codex setup bugs. The plugin now installs into the location Codex actually loads from, and the authentication value matches Codex's accepted enum so the wrapper no longer rejects it at startup.
+
+### 0.6.2 — 2026-05-14
+
+**Fix: install the SDK locally so hooks fire inside the Codex sandbox.**
+
+Codex runs hooks inside a sandboxed environment that can't reach globally-installed packages. Setup now drops the SDK into the project so the hook script resolves correctly on first run.
+
+### 0.6.1 — 2026-05-14
+
+**Fix: `VOIGHT_SOURCE` disambiguates Codex from Claude Code.**
+
+Both adapters share a hook entry point. The wrapper now sets `VOIGHT_SOURCE` so events route through the correct mapper instead of being misattributed.
+
+### 0.6.0 — 2026-05-14
+
+**Codex support (verified target).**
+
+Voight now wires into [Codex](/quickstart) the same way it wires into Claude Code and Cursor — one `setup` command drops a local marketplace plugin that registers the hooks. Events show up in the live timeline with the same shape as other targets. See the [quickstart](/quickstart) for the install steps.
+
+### 0.5.2 — 2026-05-14
+
+**Fix: route Cursor response and thought text through metadata.**
+
+Cursor's response and reasoning fields are now carried in `metadata` instead of top-level event fields. The dashboard masks them by default with the same eye-toggle reveal used for Claude Code transcripts.
+
+### 0.5.1 — 2026-05-14
+
+**Fix: normalise Cursor `model: 'default'` to `cursor-auto`.**
+
+Cursor reports `default` for its auto-routing mode, which doesn't tell you which model actually ran the turn. The SDK now rewrites it to `cursor-auto` so the dashboard's model column is honest about what happened.
+
+### 0.5.0 — 2026-05-14
+
+**Cursor support + framework-agnostic setup.**
+
+Voight is no longer Claude-Code-only. Highlights:
+
+- **Cursor adapter** — `setup` wires Cursor's `hooks.json` + wrapper script, captures 5 extended hook events, and ships prompts and outcomes in the reasoning payload so the timeline renders Cursor turns end-to-end
+- **Auto-detect the coding agent** — run `setup` with no `--target` flag and the CLI picks Claude Code, Cursor, or Codex based on your environment
+- **`frameworkName` helper** — installer and runtime messages now reflect whichever agent you're wiring in
+- **`traceId` lifted into metadata** — every event carries the trace ID the dashboard groups by, regardless of source
+- **Apache-2.0** — the SDK is now Apache-2.0 licensed (was MIT). README rewritten to drop Claude-only framing
+
+See the [quickstart](/quickstart) for the new multi-target flow and [events](/concepts/events) for the shared payload shape.
+
 ### 0.4.2 — 2026-05-10
 
 **Fix: explicit `--privacy=N` example in non-TTY welcome menu.**
