@@ -1,17 +1,18 @@
 ---
 title: Introduction
-description: "Real-time observability for AI coding agents and autonomous workflows."
+description: "Real-time observability for AI coding agents, autonomous workflows, and production LLM apps."
 ---
 
-The SDK captures every prompt, tool call, file edit, decision, and on-chain transaction your agent makes. The dashboard renders them as a live timeline. The explorer makes selected agents publicly discoverable on Solana.
+Voight captures every prompt, tool call, model response, decision, and on-chain transaction your agents and AI applications make. The dashboard renders them as a live timeline. The explorer makes selected agents publicly discoverable on Solana.
 
-## Four surfaces, one event stream
+## Five surfaces, one event stream
 
 | Surface | Lives at | What it's for | Reference |
 | --- | --- | --- | --- |
 | **Dashboard** | `voight.xyz/dashboard` | Live timeline, agents, alerts, cost + token KPIs | [Events](/concepts/events) |
 | **Explorer** | `voight.xyz/explore` | Public agent profiles, on-chain identity, reputation | [Agents](/concepts/agents) |
-| **SDK** | `@voightxyz/sdk` on npm | Wire Claude Code, Cursor, or any TS/JS agent in one paste | [Quickstart](/quickstart) |
+| **Coding SDK** | `@voightxyz/sdk` on npm | Hook Claude Code, Cursor, or any TS/JS agent you build yourself | [Quickstart](/quickstart) |
+| **App SDKs** | `@voightxyz/openai` (today) · `@voightxyz/anthropic` (next) | Wrap your provider SDK in production apps — automatic LLM-call capture | [OpenAI SDK](/ai-apps/openai) |
 | **HTTP API** | `POST /v1/events` | Language-agnostic event ingestion — Python, Go, Rust, anything | [API reference](/api-reference/events) |
 
 ## Primitives
