@@ -79,6 +79,12 @@
       ]
     },
     {
+      "group": "AI applications",
+      "pages": [
+        "ai-apps/openai"
+      ]
+    },
+    {
       "group": "Reference",
       "pages": [
         "api-reference/events",
