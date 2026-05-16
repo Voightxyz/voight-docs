@@ -1,0 +1,169 @@
+---
+title: Anthropic SDK
+description: "Wrap your Anthropic client and capture every Messages call without changing app code."
+---
+
+`@voightxyz/anthropic` instruments the official Anthropic Node SDK. Wrap your client once and every `messages.create` call — non-streaming or streaming — lands in Voight with prompts, tokens, cache reads, cache creations, tool use, latency, and errors.
+
+Same backend, same dashboard as [`@voightxyz/openai`](/ai-apps/openai) and [library mode](/sdk/library-mode) — events from all three land side-by-side under the same agent.
+
+## Install
+
+```bash
+npm install @anthropic-ai/sdk @voightxyz/anthropic
+```
+
+Requirements:
+
+- Node.js 18+ (uses global `fetch`)
+- `@anthropic-ai/sdk` 0.30.0+
+
+## Quick start
+
+```ts
+import Anthropic from '@anthropic-ai/sdk'
+import { wrapAnthropic } from '@voightxyz/anthropic'
+
+const client = wrapAnthropic(new Anthropic(), {
+  voightApiKey: process.env.VOIGHT_KEY,
+  agent: 'my-prod-agent',
+})
+
+const response = await client.messages.create({
+  model: 'claude-haiku-4-5',
+  max_tokens: 1024,
+  messages: [{ role: 'user', content: 'Hello' }],
+})
+```
+
+That's it. Every call is captured automatically. Visit your [dashboard](https://voight.xyz/dashboard) to see them.
+
+## Options
+
+| Option | Type | Default | Purpose |
+| --- | --- | --- | --- |
+| `voightApiKey` | string | env `VOIGHT_KEY` | Your Voight key from the dashboard |
+| `agent` | string | env `VOIGHT_AGENT` → `HOSTNAME` → `'unknown-agent'` | Stable identifier surfaced in the dashboard |
+| `apiBase` | string | `https://api.voight.xyz` | Override for self-hosted deployments |
+| `privacy` | `'minimal' \| 'standard' \| 'full'` | `'standard'` | Capture aggressiveness |
+| `sessionId` | string | auto UUID v4 | Trace grouping. Stable across calls of one wrapper instance — events sharing a `sessionId` render as a single trace in the dashboard |
+| `enabled` | boolean | `true` | Kill switch — when false, returns the original client untouched |
+
+A missing or empty API key is non-fatal: the wrapper prints a one-line warning and returns the original client. Production keeps running.
+
+## What's captured
+
+| Signal | Field on the event |
+| --- | --- |
+| Model id (with version suffix, e.g. `claude-haiku-4-5-20251001`) | `model` |
+| Prompt messages | `input.messages` |
+| Response text (aggregated from `content[].text` blocks) | `metadata.responseText` |
+| Token counts (input / output / total) | `metadata.tokens` |
+| Cache reads (`cache_read_input_tokens`) | `metadata.tokens.cache_read` |
+| Cache creations (`cache_creation_input_tokens`) | `metadata.tokens.cache_creation` |
+| Tool use (full array) | `metadata.toolCalls` |
+| First tool's name (audit-log compat) | `toolExecuted` |
+| Streaming flag | `metadata.streaming` |
+| Stop reason | `metadata.finishReason` |
+| Trace grouping | `metadata.sessionId` |
+| Capture level used | `metadata.privacyLevel` |
+| Latency in milliseconds | `durationMs` |
+| Errors (re-thrown to the caller, recorded with `outcome: 'failed'`) | `errorMessage`, `outcome` |
+
+## Streaming
+
+Streaming works without setup. Anthropic emits a typed event sequence (`message_start`, `content_block_start`, `content_block_delta`, `content_block_stop`, `message_delta`, `message_stop`); the wrapper's state machine reacts to the events that drive capture and passes the rest through unchanged.
+
+```ts
+const stream = await client.messages.create({
+  model: 'claude-haiku-4-5',
+  max_tokens: 256,
+  stream: true,
+  messages: [{ role: 'user', content: 'count to five' }],
+})
+for await (const event of stream) {
+  if (
+    event.type === 'content_block_delta' &&
+    event.delta.type === 'text_delta'
+  ) {
+    process.stdout.write(event.delta.text)
+  }
+}
+```
+
+Initial usage from `message_start` carries `input_tokens` plus the two cache fields. Final `output_tokens` lands on `message_delta` and merges into the emitted event so the full breakdown is captured.
+
+## Tool use
+
+```ts
+const response = await client.messages.create({
+  model: 'claude-haiku-4-5',
+  max_tokens: 256,
+  tools: [{
+    name: 'get_weather',
+    description: 'Get weather for a city',
+    input_schema: {
+      type: 'object',
+      properties: { location: { type: 'string' } },
+      required: ['location'],
+    },
+  }],
+  messages: [{ role: 'user', content: "what's the weather in Tokyo?" }],
+})
+```
+
+Tool calls live as `tool_use` blocks inside `response.content[]`. The wrapper flattens them into the same `{ id, name, arguments }` shape `@voightxyz/openai` produces — dashboards render tool calls from either provider identically. Anthropic's tool input is a parsed object on the wire; we JSON-stringify it so the captured `arguments` field is a string (matching the openai package).
+
+On the captured event:
+
+- `toolExecuted: 'get_weather'` — first tool's name
+- `metadata.toolCalls: [{ id, name, arguments }]` — full array
+
+Streaming tool use works the same — `input_json_delta.partial_json` fragments across `content_block_delta` events are concatenated per `index`.
+
+## Path-A cache pricing
+
+Anthropic distinguishes two cache operations:
+
+- **Cache creation** (`cache_creation_input_tokens`) — writing context to the cache. Billed at 1.25× input rate.
+- **Cache read** (`cache_read_input_tokens`) — reading cached context on subsequent turns. Billed at 0.10× input rate.
+
+Both fields are surfaced on `metadata.tokens` only when strictly positive. The Voight backend pricing engine applies the multipliers automatically — your spend reflects the real cost, not a flat-rate over-estimate.
+
+## Privacy
+
+Three levels apply to prompts, response text, and tool-call arguments. The function name in `toolExecuted` is treated as a tag (not user content) and survives all levels.
+
+| Level | Prompts | Response text | Tool arguments | `toolExecuted` (name) |
+| --- | --- | --- | --- | --- |
+| `minimal` | dropped | dropped | dropped | kept |
+| `standard` | scrubbed | scrubbed | scrubbed | kept |
+| `full` | verbatim | verbatim | verbatim | kept |
+
+Standard scrubs 12 patterns: PEM private keys, JWTs, Anthropic / OpenAI / Stripe live / GitHub / AWS / Slack / Voight API keys, emails, E.164 phones, and Luhn-validated credit cards.
+
+See [PII patterns](/privacy/pii-patterns) for the full catalogue.
+
+## How it compares
+
+| Use case | Reach for |
+| --- | --- |
+| Coding agent (Claude Code, Cursor) capturing your dev sessions | [Hooks-based SDK](/quickstart) |
+| Autonomous TS/JS bot you wrote yourself emitting custom events | [Library mode](/sdk/library-mode) |
+| Production app calling Anthropic in user-facing flows | This package |
+| Production app calling OpenAI | [`@voightxyz/openai`](/ai-apps/openai) |
+| Anything else (Python, Go, Rust) | [HTTP API](/sdk/http-api) |
+
+The packages coexist — wrap your Anthropic client AND call `voight.log()` for your own domain events under the same agent.
+
+## Source
+
+- [github.com/Voightxyz/voight-anthropic](https://github.com/Voightxyz/voight-anthropic)
+- [npmjs.com/package/@voightxyz/anthropic](https://www.npmjs.com/package/@voightxyz/anthropic)
+
+## Roadmap
+
+- Bedrock and Vertex Anthropic clients
+- Batch API (when GA)
+
+See the [changelog](/changelog) for shipped releases.

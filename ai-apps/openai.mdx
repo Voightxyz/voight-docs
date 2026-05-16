@@ -3,11 +3,9 @@ title: OpenAI SDK
 description: "Wrap your OpenAI client and capture every model call without changing app code."
 ---
 
-`@voightxyz/openai` instruments the official OpenAI Node SDK. Wrap your client once and every `chat.completions.create` — non-streaming or streaming — lands in Voight with prompts, tokens, cache reads, tool calls, latency, and errors.
+`@voightxyz/openai` instruments the official OpenAI Node SDK. Wrap your client once and every `chat.completions.create` or `responses.create` call — non-streaming or streaming — lands in Voight with prompts, tokens, cache reads, tool calls, latency, and errors.
 
-This is the same SDK-instrumentation model Sentry / Vercel AI / LangChain use. Same backend, same dashboard as [library mode](/sdk/library-mode) — events from both land side-by-side under the same agent.
-
-> Currently published as `0.1.0-beta.3` under both `@latest` and `@beta` tags. Stable `0.1.0` ships once the surface has run a week of real traffic without changes.
+This is the same SDK-instrumentation model Sentry / Vercel AI / LangChain use. Same backend, same dashboard as [`@voightxyz/anthropic`](/ai-apps/anthropic) and [library mode](/sdk/library-mode) — events from all three land side-by-side under the same agent.
 
 ## Install
 
@@ -47,6 +45,7 @@ That's it. Every call is captured automatically. Visit your [dashboard](https://
 | `agent` | string | env `VOIGHT_AGENT` → `HOSTNAME` → `'unknown-agent'` | Stable identifier surfaced in the dashboard |
 | `apiBase` | string | `https://api.voight.xyz` | Override for self-hosted deployments |
 | `privacy` | `'minimal' \| 'standard' \| 'full'` | `'standard'` | Capture aggressiveness |
+| `sessionId` | string | auto UUID v4 | Trace grouping. Stable across calls of one wrapper instance — events sharing a `sessionId` render as a single trace in the dashboard |
 | `enabled` | boolean | `true` | Kill switch — when false, returns the original client untouched (zero overhead) |
 
 A missing or empty API key is non-fatal: the wrapper prints a one-line warning and returns the original client. Production keeps running.
@@ -55,20 +54,40 @@ A missing or empty API key is non-fatal: the wrapper prints a one-line warning a
 
 | Signal | Field on the event |
 | --- | --- |
-| Model id (with version suffix, e.g. `gpt-4o-mini-2024-07-18`) | `model` |
-| Prompt messages | `input.messages` |
+| Model id (with version suffix) | `model` |
+| API surface used (chat completions vs responses) | `metadata.api` (`'responses'` on responses events; omitted on chat) |
+| Prompt messages (chat) | `input.messages` |
+| Input payload (responses) | `input.input` |
 | Response text | `metadata.responseText` |
 | Token counts (input / output / total) | `metadata.tokens` |
 | Cache reads (`prompt_tokens_details.cached_tokens`) | `metadata.tokens.cache_read` |
+| Reasoning tokens (Responses API, o1 / o3 / future reasoning models) | `metadata.tokens.reasoning` |
 | Tool / function calls (full array) | `metadata.toolCalls` |
 | First tool's name (audit-log compat) | `toolExecuted` |
 | Streaming flag | `metadata.streaming` |
-| Finish reason | `metadata.finishReason` |
+| Finish reason / response status | `metadata.finishReason` |
+| Trace grouping | `metadata.sessionId` |
+| Capture level used | `metadata.privacyLevel` |
 | Latency in milliseconds | `durationMs` |
 | Errors (re-thrown to the caller, recorded with `outcome: 'failed'`) | `errorMessage`, `outcome` |
-| Capture level used | `metadata.privacyLevel` |
 
-## Streaming
+## Supported endpoints
+
+The wrapper intercepts two paths:
+
+- `client.chat.completions.create` — Chat Completions (non-streaming + streaming, tool calling)
+- `client.responses.create` — Responses API (non-streaming + streaming, function calling, reasoning models)
+
+Everything else on the OpenAI client passes through untouched. Embeddings, images, audio, and the Azure OpenAI client are on the 0.2.0 roadmap.
+
+## Chat Completions
+
+```ts
+const response = await client.chat.completions.create({
+  model: 'gpt-4o-mini',
+  messages: [{ role: 'user', content: 'Hi' }],
+})
+```
 
 Streaming works without setup. The wrapper auto-injects `stream_options.include_usage: true` so the final chunk carries the token count, and a per-index aggregator reassembles tool-call argument fragments.
 
@@ -86,7 +105,38 @@ for await (const chunk of stream) {
 
 An explicit `stream_options: { include_usage: false }` from the caller is preserved — you opt out of token capture for streaming events but everything else is still captured.
 
+## Responses API
+
+The Responses API is OpenAI's surface for apps built after Mar 2025: typed output items, stateful conversations via `previous_response_id`, built-in tools, and explicit `reasoning_tokens` for o1 / o3 models.
+
+```ts
+const response = await client.responses.create({
+  model: 'gpt-4o-mini',
+  input: 'Reply with: pong',
+})
+console.log(response.output_text)
+```
+
+Events from this surface carry `metadata.api: 'responses'` so dashboards can distinguish call sites from Chat Completions. Streaming is a typed event sequence (`response.created`, `response.output_text.delta`, `response.output_item.added`, `response.function_call_arguments.delta`, `response.completed`); the wrapper's state machine reacts to the critical events and passes the rest through unchanged.
+
+```ts
+const stream = await client.responses.create({
+  model: 'gpt-4o-mini',
+  input: 'Count to five',
+  stream: true,
+})
+for await (const event of stream) {
+  if (event.type === 'response.output_text.delta') {
+    process.stdout.write(event.delta)
+  }
+}
+```
+
+For reasoning models, `metadata.tokens.reasoning` separates the "thinking" overhead from the visible answer so cost analysis stays accurate.
+
 ## Tool / function calling
+
+Works the same for both endpoints:
 
 ```ts
 const response = await client.chat.completions.create({
@@ -112,13 +162,13 @@ On the captured event:
 - `toolExecuted: 'get_weather'` — first tool's name. Renders in the audit-log DETAIL column with the same shape as Bash/Edit hook events.
 - `metadata.toolCalls: [{ id, name, arguments }]` — full array. `arguments` is the raw JSON string the model produced (we don't parse it — invalid JSON is a real failure mode you need to debug).
 
-Streaming function calls work the same — fragment deltas across chunks are concatenated per tool index.
+Streaming function calls work the same — fragment deltas across chunks (Chat Completions) or `function_call_arguments.delta` events (Responses) are concatenated per tool index.
 
 ## Privacy
 
 Three levels apply to prompts, response text, and tool-call arguments. The function name in `toolExecuted` is treated as a tag (not user content) and survives all levels.
 
-| Level | Prompt messages | Response text | Tool arguments | `toolExecuted` (name) |
+| Level | Prompts | Response text | Tool arguments | `toolExecuted` (name) |
 | --- | --- | --- | --- | --- |
 | `minimal` | dropped | dropped | dropped | kept |
 | `standard` | scrubbed | scrubbed | scrubbed | kept |
@@ -135,7 +185,7 @@ See [PII patterns](/privacy/pii-patterns) for the full catalogue.
 | Coding agent (Claude Code, Cursor) capturing your dev sessions | [Hooks-based SDK](/quickstart) |
 | Autonomous TS/JS bot you wrote yourself emitting custom events | [Library mode](/sdk/library-mode) |
 | Production app calling OpenAI in user-facing flows | This package |
-| Production app calling Anthropic | `@voightxyz/anthropic` (next release) |
+| Production app calling Anthropic | [`@voightxyz/anthropic`](/ai-apps/anthropic) |
 | Anything else (Python, Go, Rust) | [HTTP API](/sdk/http-api) |
 
 The packages coexist — wrap your OpenAI client AND call `voight.log()` for your own domain events under the same agent.
@@ -145,11 +195,11 @@ The packages coexist — wrap your OpenAI client AND call `voight.log()` for you
 - [github.com/Voightxyz/voight-openai](https://github.com/Voightxyz/voight-openai)
 - [npmjs.com/package/@voightxyz/openai](https://www.npmjs.com/package/@voightxyz/openai)
 
-## What's next
+## Roadmap
 
-- `responses.create` (Responses API)
-- Embeddings, image generation, audio
+- Embeddings (`embeddings.create`)
+- Image generation (`images.generate`)
+- Audio (Whisper / TTS)
 - Azure OpenAI client
-- Same shape for Anthropic (`@voightxyz/anthropic`)
 
 See the [changelog](/changelog) for shipped releases.
