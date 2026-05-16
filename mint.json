@@ -81,7 +81,8 @@
     {
       "group": "AI applications",
       "pages": [
-        "ai-apps/openai"
+        "ai-apps/openai",
+        "ai-apps/anthropic"
       ]
     },
     {
