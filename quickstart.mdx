@@ -1,13 +1,13 @@
 ---
 title: Quickstart
-description: "Get events from your agent into the Voight dashboard in 30 seconds."
+description: "Get events from your agent or LLM app into the Voight dashboard in 30 seconds."
 ---
 
-Three install paths. Same dashboard, same privacy model, same API.
+Four install paths. Same dashboard, same privacy model, same API. Pick the one that matches what you're building.
 
 ## Step 1 — Install
 
-### A · Coding agent (Claude Code, Cursor, Codex…)
+### A · Coding agent (Claude Code, Cursor)
 
 A wizard writes the right hooks and env into your IDE's config. No code changes.
 
@@ -15,7 +15,7 @@ A wizard writes the right hooks and env into your IDE's config. No code changes.
 npx -y @voightxyz/sdk setup
 ```
 
-Verified today for **Claude Code**. Cursor and Codex targets are scaffolded — see [SDK targets](/sdk/library-mode#verified-vs-scaffolded-targets).
+Verified working today: **Claude Code** and **Cursor** — the wizard auto-detects which one you're running. **Codex** integration is in an active fix cycle (Codex's sandbox blocks the hooks from reaching the SDK reliably); the wrapper exists and the changelog tracks attempts, but it isn't a target we'd recommend installing right now.
 
 ### B · Autonomous agent (ElizaOS, Solana Agent Kit, custom)
 
@@ -39,7 +39,45 @@ await voight.log({
 
 Full reference in [Library mode](/sdk/library-mode).
 
-### C · Any language over HTTP
+### C · Production LLM app (OpenAI / Anthropic in user-facing flows)
+
+Wrap your provider client once and every model call is captured automatically — prompts, tokens, cache reads, tool calls, latency, errors. Per-user spend attribution with one extra line of code.
+
+```bash
+# pick the one matching your provider
+npm install openai @voightxyz/openai
+npm install @anthropic-ai/sdk @voightxyz/anthropic
+```
+
+```ts
+import OpenAI from 'openai'
+import { wrapOpenAI, withTrace } from '@voightxyz/openai'
+
+const openai = wrapOpenAI(new OpenAI(), {
+  agent: 'production-chat-api',
+  voightApiKey: process.env.VOIGHT_KEY,
+})
+
+app.post('/api/chat', async (req, res) => {
+  await withTrace(
+    async () => {
+      const reply = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: req.body.prompt }],
+      })
+      res.json({ reply })
+    },
+    {
+      routeTag: 'POST /api/chat',
+      tags: { userId: req.user.id, plan: req.user.plan },
+    },
+  )
+})
+```
+
+The `tags` map drives [per-user spend tracking](/concepts/per-user-spend) — the dashboard's **Users sub-tab** populates with per-customer cost as soon as your first request lands. Same pattern with `@voightxyz/anthropic` — see the [OpenAI](/ai-apps/openai) and [Anthropic](/ai-apps/anthropic) SDK pages for the full surface.
+
+### D · Any language over HTTP
 
 For Python, Go, Rust, or anything that speaks JSON — POST events directly, no SDK required.
 
@@ -54,7 +92,7 @@ Full schema in the [HTTP API reference](/api-reference/events).
 
 ## Step 2 — Pick your privacy level
 
-For path A the wizard prompts you. For paths B and C you pass it on `voight.init({ privacy: 'standard' })` or per-request.
+For path A the wizard prompts you. For path B pass it on `voight.init({ privacy: 'standard' })`. For path C set it on `wrapOpenAI(..., { privacy: 'standard' })`. For path D include `metadata.privacyLevel` on each request — scrubbing is your responsibility on the raw HTTP path.
 
 - **Minimal** — metadata only. No prompts, responses, file paths, cwd, or git context leave your machine.
 - **Standard** ★ — full content with local PII scrubbing. Credentials and personal info redacted before transmission.
@@ -76,6 +114,8 @@ Open [voight.xyz/dashboard](https://voight.xyz/dashboard). Within seconds you sh
 - Events streaming in **Overview** and **Audit log**
 - Token counts, cost USD, and model tags on each event
 - A per-event privacy chip (`MIN` / `STD` / `FULL`) confirming which level captured it
+
+**For path C (App SDKs):** also open [voight.xyz/dashboard/ai-apps](https://voight.xyz/dashboard/ai-apps) for the dedicated production-app surface — Overview / Traces / Models / Tools / Users. The Users sub-tab populates as soon as you pass `tags.userId` inside `withTrace`. See [AI Apps overview](/ai-apps/overview) for the full surface.
 
 ## Non-TTY install for path A
 
@@ -135,4 +175,6 @@ Each step prints instructions and exits cleanly. The chain reads naturally for b
 - [Concepts → Events](/concepts/events) — the data model
 - [Privacy overview](/privacy/overview) — pick the right level for your workflow
 - [Library mode](/sdk/library-mode) — deep dive on path B
-- [HTTP API](/sdk/http-api) — deep dive on path C
+- [OpenAI SDK](/ai-apps/openai) · [Anthropic SDK](/ai-apps/anthropic) — deep dive on path C
+- [Per-user spend](/concepts/per-user-spend) — one line of code to attribute cost per end-user
+- [HTTP API](/sdk/http-api) — deep dive on path D

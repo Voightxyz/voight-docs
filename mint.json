@@ -72,17 +72,20 @@
       ]
     },
     {
+      "group": "AI Apps",
+      "pages": [
+        "ai-apps/overview",
+        "concepts/per-user-spend",
+        "ai-apps/tracing",
+        "ai-apps/openai",
+        "ai-apps/anthropic"
+      ]
+    },
+    {
       "group": "Install paths",
       "pages": [
         "sdk/library-mode",
         "sdk/http-api"
-      ]
-    },
-    {
-      "group": "AI applications",
-      "pages": [
-        "ai-apps/openai",
-        "ai-apps/anthropic"
       ]
     },
     {

@@ -1,0 +1,162 @@
+---
+title: AI Apps overview
+description: "The dashboard section for production LLM apps — cost, traces, models, tools, and per-user spend in one place."
+---
+
+**AI Apps** is the dedicated dashboard section for production apps that call OpenAI or Anthropic at runtime — your customer-facing copilots, your agentic features, your AI-powered endpoints. It lives at [voight.xyz/dashboard/ai-apps](https://voight.xyz/dashboard/ai-apps) and ships once you wrap your provider client with [`@voightxyz/openai`](/ai-apps/openai) or [`@voightxyz/anthropic`](/ai-apps/anthropic).
+
+The section is separate from the coding-agent dashboard on purpose. Your team's Claude Code / Cursor / Codex telemetry and your production LLM app's user-facing telemetry are different operational questions — different cadences, different SLOs, different people read them. Keeping them in their own surface lets each one stay opinionated about what it shows.
+
+## What you get out of the box
+
+Wrap your client once, deploy, and the dashboard populates within seconds. Five sub-tabs aggregate the same event stream from different angles:
+
+| Sub-tab | The question it answers |
+| --- | --- |
+| **Overview** | "How is this app doing right now?" — cost, traffic, error rate, latency, all with prior-window deltas |
+| **Traces** | "What happened in this specific request?" — every `withTrace` block as a card, drillable to individual events |
+| **Models** | "Which model is eating my budget?" — cost & token mix by model, ranked |
+| **Tools** | "Which functions does the model call most?" — tool-use frequency, success rate, p50/p95 duration |
+| **Users** | "Which end-user costs me money?" — per-user spend, traces, tokens (powered by [per-user tags](/concepts/per-user-spend)) |
+
+## The data model behind the section
+
+Every event in AI Apps comes from one of two sources:
+
+- **Wrapped LLM calls** — captured automatically by `@voightxyz/openai` or `@voightxyz/anthropic` when you wrap your client. One event per `chat.completions.create`, `responses.create`, or `messages.create` call. Carries model, tokens (input/output/cache reads/cache creations), tool calls, latency, finish reason, and (if you call `withTrace`) your `tags` map.
+- **`log()` events inside `withTrace`** — when you call `log()` from inside a `withTrace` block to mark a domain event (`"user submitted form"`, `"retrieval returned 0 results"`). Stamped with the same `tags` as the surrounding LLM calls, but `type: 'log'` so they're distinguishable.
+
+Both flow through the same ingestion pipeline as the rest of Voight. The AI Apps section adds a server-side filter: only agents whose `framework` is `openai` or `anthropic` are included, so your coding-agent traffic never bleeds in.
+
+## Filter pills
+
+Three filters live in the top bar, all composable:
+
+- **Agent** — narrow to a single wrapped agent (e.g. `production-chat-api` vs `internal-summarizer-bot`). All agents using `@voightxyz/openai` or `@voightxyz/anthropic` appear here.
+- **Provider** — narrow to OpenAI or Anthropic only. Useful when one wrapper agent calls both providers (it happens — multi-provider routers, fallback chains) and you want to isolate one.
+- **User** — narrow to a single `tags.userId` value. Drives the Users sub-tab but is also available globally so you can see Models / Tools / Traces scoped to one customer.
+
+The filter state is reflected in the URL — share a link to `/dashboard/ai-apps?provider=anthropic&tag.plan=enterprise` and the recipient lands on the same view.
+
+### Provider filter: per-event, not per-agent
+
+A subtle bug we hit early: a single agent that calls both OpenAI **and** Anthropic (failover, A/B routing) gets `agent.framework` pinned to whichever wrapper initialized first. If you filtered by `agent.framework`, choosing "OpenAI" would still show Claude models from that same agent.
+
+The fix shipped in May 2026: provider filtering uses **`metadata.source`** (per-event, set by each wrapper) instead of `agent.framework` (per-agent, first-seen). Multi-provider agents now filter cleanly — choose OpenAI and you see only events where the wrapper that emitted them was `@voightxyz/openai`.
+
+## Overview sub-tab
+
+The default landing tab. Three regions:
+
+1. **KPI strip** — cost USD, total calls, error rate, p50 latency, p95 latency. Each KPI carries a delta vs the prior identical window (`28d vs prior 28d` by default; toggleable to 7d / 1d).
+2. **Activity pulse** — stacked-area chart of traffic over time, coloured by provider. The pulse refreshes every 15s so you can watch live traffic during a deploy.
+3. **Top models / Top tools / Top users** — three compact leaderboards as entry points to the deeper sub-tabs.
+
+Everything respects the active filters. Set the Provider pill to OpenAI and the KPIs, the pulse, and the leaderboards all narrow.
+
+## Traces sub-tab
+
+A `withTrace` block becomes one trace card. The card shows:
+
+- Route tag (`POST /api/chat`)
+- Total duration of the block
+- Cost USD
+- Number of LLM calls, tool calls, errors
+- User tag (if set) — clickable to filter the whole section to that user
+
+Click a card and you get the full timeline: every `chat.completions.create`, every tool call, every `log()` event, in order, with prompts and responses revealed by an eye toggle (masked by default, same UX as the coding-agent traces).
+
+Derived child spans: if a model response includes `tool_calls`, the dashboard renders each one as a synthetic child span under the parent LLM call — even though they're not separate events on the wire. Mirror what most engineers expect from APM tools.
+
+## Models sub-tab
+
+One row per `(provider, model)` pair active in the time window:
+
+- Cost USD (sum)
+- Calls (count)
+- Tokens (input + output + cache reads + cache creations, decomposed)
+- p50 / p95 latency
+- Share of overall cost as a sparkline
+
+Sorted by cost descending. Click any row to filter Traces and Overview to that specific model.
+
+## Tools sub-tab
+
+One row per unique `tool.name` the model invoked:
+
+- Invocations (count)
+- Success rate (`outcome === 'success'` / total)
+- p50 / p95 duration of the tool execution itself
+- Last seen timestamp
+- Top users for this tool (mini-leaderboard inline)
+
+Includes both function-calling (OpenAI / Anthropic `tool_use`) and any explicit `log({ type: 'tool', toolExecuted })` calls inside `withTrace`.
+
+## Users sub-tab
+
+Powered by [per-user tags](/concepts/per-user-spend). See that page for the 1-line code pattern that makes this tab populate. Key columns:
+
+- User (the `tags.userId` value, verbatim)
+- Spend (USD)
+- Traces (`withTrace` block count)
+- Tokens (total)
+- Last seen
+- Top model
+
+Sorted by spend desc. Empty state if you haven't wired `tags.userId` yet, with a deep link to the per-user-spend setup guide.
+
+## Privacy in AI Apps
+
+The wrapper SDKs ship with the same three privacy levels as the rest of Voight — Minimal, Standard, Full. Set on wrap:
+
+```ts
+wrapOpenAI(new OpenAI(), { privacy: 'standard', agent: '...' })
+```
+
+| Level | Prompts & responses | Tool arguments | Tokens & cost | Tags |
+| --- | --- | --- | --- | --- |
+| Minimal | dropped | dropped | kept | kept |
+| Standard ★ | scrubbed via [`scrubPii()`](/privacy/pii-patterns) | scrubbed | kept | kept |
+| Full | verbatim | verbatim | kept | kept |
+
+Tags are treated as operational identifiers (not user content) and pass through every level. Numbers always pass through. The AI Apps section works in all three modes — Minimal still gives you cost, model, latency, and user attribution; you lose only the prompt/response previews.
+
+## Time window
+
+The window selector in the top-right controls every panel in the section. Defaults to 28 days. Available windows: 1 day, 7 days, 14 days, 28 days, 90 days. All deltas (the green/red percentage chips on KPIs) compare to the prior identical window — `28d vs prior 28d`, `7d vs prior 7d`, etc.
+
+Retention cap is governed by your [pricing tier](/pricing) — events older than your retention window are purged.
+
+## How AI Apps relates to the rest of the dashboard
+
+| Dashboard surface | What it shows | When you reach for it |
+| --- | --- | --- |
+| **AI Apps** (this page) | Production LLM apps using the wrapper SDKs | Customer-facing copilots, agentic features, B2B AI products |
+| **Overview** (`/dashboard`) | Coding-agent sessions (Claude Code, Cursor, Codex) + library-mode bots | Your team's dev workflow telemetry |
+| **Audit log** | Every event across every surface, filterable | "Show me what happened at 3:42pm" forensics |
+| **Sessions** | Per-process timelines | Long-running autonomous agents, multi-hour Claude Code runs |
+| **Traces** | Per-prompt timelines | One agent turn from prompt to final response |
+| **Explorer** (`/explore`) | Public Solana agent registry | On-chain identity, reputation, x402 |
+
+Same backend, same event schema, same privacy model. The AI Apps section is the **opinionated view** for production LLM-app telemetry — built so a product engineer can answer "is this app healthy?" without learning the rest of the dashboard.
+
+## API access
+
+Every panel is backed by a public endpoint under `/v1/me/ai-apps/*`:
+
+```bash
+curl -H "authorization: Bearer $PRIVY_JWT" \
+  "https://api.voight.xyz/v1/me/ai-apps/overview?windowDays=28&provider=anthropic"
+
+curl -H "authorization: Bearer $PRIVY_JWT" \
+  "https://api.voight.xyz/v1/me/ai-apps/users?windowDays=7&tag.plan=enterprise"
+```
+
+Build your own internal admin UIs, weekly cost reports, customer-facing per-tenant dashboards — same data the AI Apps section consumes.
+
+## Next
+
+- [Per-user spend](/concepts/per-user-spend) — the killer feature; one line of code to populate the Users tab
+- [Tracing](/ai-apps/tracing) — `withTrace` + `log` API in full
+- [OpenAI SDK](/ai-apps/openai) — wrap your OpenAI client
+- [Anthropic SDK](/ai-apps/anthropic) — wrap your Anthropic client

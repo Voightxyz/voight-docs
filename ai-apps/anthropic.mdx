@@ -36,7 +36,46 @@ const response = await client.messages.create({
 })
 ```
 
-That's it. Every call is captured automatically. Visit your [dashboard](https://voight.xyz/dashboard) to see them.
+That's it. Every call is captured automatically. Visit your [dashboard](https://voight.xyz/dashboard/ai-apps) to see them in the **AI Apps** section.
+
+## Tracing & per-user tags
+
+For production apps, wrap each request boundary with `withTrace` to group every LLM call inside one request into one trace, and to attribute cost per end-user with one line of code:
+
+```ts
+import Anthropic from '@anthropic-ai/sdk'
+import { wrapAnthropic, withTrace, log } from '@voightxyz/anthropic'
+
+const anthropic = wrapAnthropic(new Anthropic(), { agent: 'production-chat-api' })
+
+app.post('/api/chat', async (req, res) => {
+  await withTrace(
+    async () => {
+      log('chat request received')
+
+      const reply = await anthropic.messages.create({
+        model: 'claude-haiku-4-5',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: req.body.prompt }],
+      })
+
+      res.json({ reply })
+    },
+    {
+      routeTag: 'POST /api/chat',
+      tags: { userId: req.user.id, plan: req.user.plan },
+    },
+  )
+})
+```
+
+Every wrapped LLM call inside the `withTrace` block gets stamped with `metadata.tags = { userId, plan, ... }` automatically. The dashboard's [AI Apps section](/ai-apps/overview) then surfaces:
+
+- **Users sub-tab** — per-user spend, traces, tokens (driven by `tags.userId`)
+- **Trace cards** — every `withTrace` block as one drillable card with cost, latency, and event timeline
+- **User filter pill** — narrow Overview / Models / Tools to one user
+
+Full surface in [Tracing](/ai-apps/tracing). The per-user pattern in depth — with examples for Auth0, Clerk, NextAuth, custom JWT, and anonymous flows — lives at [per-user spend](/concepts/per-user-spend).
 
 ## Options
 
@@ -66,6 +105,9 @@ A missing or empty API key is non-fatal: the wrapper prints a one-line warning a
 | Streaming flag | `metadata.streaming` |
 | Stop reason | `metadata.finishReason` |
 | Trace grouping | `metadata.sessionId` |
+| Trace ID (when inside `withTrace`) | `metadata.traceId` |
+| Route tag (when inside `withTrace`) | `metadata.routeTag` |
+| User / plan / org tags (when inside `withTrace`) | `metadata.tags` |
 | Capture level used | `metadata.privacyLevel` |
 | Latency in milliseconds | `durationMs` |
 | Errors (re-thrown to the caller, recorded with `outcome: 'failed'`) | `errorMessage`, `outcome` |
@@ -148,13 +190,14 @@ See [PII patterns](/privacy/pii-patterns) for the full catalogue.
 
 | Use case | Reach for |
 | --- | --- |
-| Coding agent (Claude Code, Cursor) capturing your dev sessions | [Hooks-based SDK](/quickstart) |
+| Coding agent (Claude Code, Cursor, Codex) capturing your dev sessions | [Hooks-based SDK](/quickstart) |
 | Autonomous TS/JS bot you wrote yourself emitting custom events | [Library mode](/sdk/library-mode) |
 | Production app calling Anthropic in user-facing flows | This package |
 | Production app calling OpenAI | [`@voightxyz/openai`](/ai-apps/openai) |
+| Per-user / per-tenant cost attribution in any of the above | [Per-user spend](/concepts/per-user-spend) |
 | Anything else (Python, Go, Rust) | [HTTP API](/sdk/http-api) |
 
-The packages coexist — wrap your Anthropic client AND call `voight.log()` for your own domain events under the same agent.
+The packages coexist — wrap your Anthropic client AND call `voight.log()` for your own domain events under the same agent. Adding [`withTrace`](/ai-apps/tracing) on top groups them all per-request.
 
 ## Source
 

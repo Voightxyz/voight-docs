@@ -1,0 +1,258 @@
+---
+title: Tracing
+description: "Group every LLM call inside a request into one trace — withTrace + log + tags, shared by both wrappers."
+---
+
+`withTrace` is the request-boundary primitive shared by [`@voightxyz/openai`](/ai-apps/openai) and [`@voightxyz/anthropic`](/ai-apps/anthropic). It opens a logical span — typically your HTTP handler — and every wrapped LLM call inside that span gets grouped under one trace in the dashboard, automatically.
+
+It also carries **tags** (the foundation of [per-user spend tracking](/concepts/per-user-spend)) and a **routeTag** (so traces are attributable to which endpoint produced them). Under the hood it's `AsyncLocalStorage` — Node's async-context primitive — so there's nothing to thread through your function signatures.
+
+## Why grouping matters
+
+A single user request often makes multiple LLM calls: a planner, a retrieval reranker, a final answer, maybe a moderation check on the output. Without grouping, those are five disconnected events in the audit log. With `withTrace`, they're one trace card on the dashboard with one total cost, one total latency, and a drillable timeline.
+
+The same shape industry tools (Datadog APM, Sentry, OpenTelemetry) use for HTTP request tracing — Voight applies it to LLM workflows.
+
+## The API surface
+
+Two functions, exported identically from both wrappers:
+
+```ts
+import { withTrace, log } from '@voightxyz/openai'
+// — or —
+import { withTrace, log } from '@voightxyz/anthropic'
+```
+
+Use whichever you imported the wrapper from. Both share the same backing implementation; you don't need to import from both if your app uses both providers.
+
+### `withTrace(fn, options)`
+
+```ts
+withTrace<T>(
+  fn: () => Promise<T>,
+  options?: {
+    routeTag?: string                          // e.g. 'POST /api/chat'
+    tags?: Record<string, string | number>     // e.g. { userId, plan, org }
+  },
+): Promise<T>
+```
+
+Opens a trace, runs `fn`, returns whatever `fn` returned. Every wrapped LLM call that happens inside `fn` (including in helper functions, await points, callbacks — anything reachable through async context) gets stamped with the trace's `routeTag` and `tags`.
+
+The trace closes automatically when `fn` resolves or rejects. Errors propagate normally — `withTrace` doesn't swallow.
+
+### `log(message, extra?)`
+
+```ts
+log(
+  message: string,
+  extra?: Record<string, unknown>,
+): void
+```
+
+Emits a free-form event inside the current trace. Doesn't require an awaitable — synchronous, fire-and-forget. Common uses:
+
+- `log('cache hit')` — mark a code path
+- `log('retrieval returned 0 results', { query })` — capture a domain signal
+- `log('fallback to gpt-4o')` — annotate a routing decision
+
+`log()` events appear in the Traces timeline interleaved with LLM calls, carry the same `tags`, and show up in the audit log. Calling `log()` **outside** a `withTrace` block is a no-op (with a one-line console warning) — the event has nowhere to belong.
+
+## Minimal example
+
+```ts
+import OpenAI from 'openai'
+import { wrapOpenAI, withTrace, log } from '@voightxyz/openai'
+
+const openai = wrapOpenAI(new OpenAI(), {
+  agent: 'production-chat-api',
+  privacy: 'standard',
+})
+
+app.post('/api/chat', async (req, res) => {
+  await withTrace(
+    async () => {
+      log('chat request received', { userId: req.user.id })
+
+      const reply = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: req.body.prompt }],
+      })
+
+      log('reply generated', { tokens: reply.usage?.total_tokens })
+
+      res.json({ reply: reply.choices[0].message.content })
+    },
+    {
+      routeTag: 'POST /api/chat',
+      tags: { userId: req.user.id, plan: req.user.plan },
+    },
+  )
+})
+```
+
+In the dashboard this lands as **one trace card** with two `log` events bookending the LLM call, all tagged with the user.
+
+## Composing across helpers
+
+You don't need to pass anything explicitly through function signatures — `AsyncLocalStorage` carries the trace context through any awaited call:
+
+```ts
+async function summarize(text: string) {
+  log('summarize:start', { length: text.length })
+  const result = await openai.chat.completions.create({ ... })
+  log('summarize:done')
+  return result
+}
+
+async function moderate(text: string) {
+  log('moderate:start')
+  const result = await openai.chat.completions.create({ ... })
+  log('moderate:done')
+  return result
+}
+
+app.post('/api/process', async (req, res) => {
+  await withTrace(
+    async () => {
+      const summary = await summarize(req.body.text)
+      const flagged = await moderate(summary.choices[0].message.content!)
+      res.json({ summary, flagged })
+    },
+    {
+      routeTag: 'POST /api/process',
+      tags: { userId: req.user.id },
+    },
+  )
+})
+```
+
+Two LLM calls, four `log` events, one trace. The helpers don't know they're being traced — they just call `log()` and use the wrapped client.
+
+## Mixing providers in one trace
+
+If you use both OpenAI and Anthropic in the same request (router pattern, fallback chain, A/B test), wrap both clients and import `withTrace` from either package:
+
+```ts
+import { wrapOpenAI, withTrace } from '@voightxyz/openai'
+import { wrapAnthropic }         from '@voightxyz/anthropic'
+
+const openai    = wrapOpenAI(new OpenAI(),       { agent: 'router' })
+const anthropic = wrapAnthropic(new Anthropic(), { agent: 'router' })
+
+await withTrace(
+  async () => {
+    const openaiReply    = await openai.chat.completions.create({ ... })
+    const anthropicReply = await anthropic.messages.create({ ... })
+    // both LLM calls land under the same trace, tagged identically
+  },
+  { tags: { userId, ab: 'arm-b' } },
+)
+```
+
+Both packages share a global async-context store under the hood — there's no fight about who "owns" the trace.
+
+## Tags propagate everywhere
+
+Anything you set in `withTrace({ tags })` lands on `metadata.tags` of every event produced inside. The dashboard surfaces:
+
+- `tags.userId` → the Users sub-tab + the global User filter pill
+- All other tags → queryable via `GET /v1/me/ai-apps/*?tag.<key>=<value>` (e.g. `?tag.plan=pro`)
+
+Reserved keys (Voight uses them for product features): `userId`, `plan`, `org`, `feature`. You can still use other names freely; these four just have dedicated dashboard surfaces. See [per-user spend](/concepts/per-user-spend) for the full conventions.
+
+## Route tagging
+
+`routeTag` is a freeform string that becomes the trace card's headline label. Conventions that work well:
+
+- HTTP method + path: `'POST /api/chat'`
+- gRPC: `'ChatService.GenerateReply'`
+- Job names: `'cron:daily-summary'`
+- Background workers: `'queue:embed-doc'`
+
+If you don't pass one, the trace card falls back to `'untagged'`. Nothing breaks, but you lose the ability to slice metrics by endpoint.
+
+## Nested `withTrace` calls
+
+If you call `withTrace` inside an already-open trace, the inner call **inherits** the outer trace's context — same `routeTag`, same `tags`, same trace ID. The inner block doesn't open a new trace. This is intentional: nesting is common in middleware (a logger middleware wraps every handler in `withTrace`, then a handler-specific wrapper does the same), and we don't want to fragment one logical request into multiple traces.
+
+If you genuinely need a separate trace inside the same async stack (rare), end the outer one explicitly and start a new one after.
+
+## Errors
+
+```ts
+await withTrace(
+  async () => {
+    await openai.chat.completions.create({ ... })
+    throw new Error('downstream failed')  // ← rethrows after the LLM call is captured
+  },
+  { routeTag: 'POST /api/risky' },
+)
+// Caller sees the original error.
+// Trace card on the dashboard shows: 1 LLM call captured + 1 errored trace.
+```
+
+The LLM call's event is recorded normally. The trace card surfaces the error state so you can find failed requests fast in the dashboard.
+
+## Performance
+
+- `AsyncLocalStorage` is part of Node's built-in `async_hooks`. Overhead is sub-microsecond per await — negligible compared to any network call.
+- `log()` events are buffered in memory and flushed when the trace closes. One HTTP request out per trace, not per `log()` call.
+- `withTrace` is safe in serverless (Vercel Functions, AWS Lambda, Cloudflare Workers — wherever Node 18+ runs).
+
+## Comparing to library-mode `voight.log()`
+
+If you're using the [library mode SDK](/sdk/library-mode) for autonomous bots, you're already familiar with `voight.log()`. The two are siblings:
+
+| | Library mode `voight.log()` | Wrapper `log()` |
+| --- | --- | --- |
+| Where it lives | `@voightxyz/sdk` | `@voightxyz/openai` and `@voightxyz/anthropic` |
+| Needs an open trace? | No — every call is its own event | Yes — must be inside `withTrace` |
+| Carries `tags`? | Pass as `metadata` per call | Inherited from `withTrace({ tags })` automatically |
+| Returns a promise? | Yes — `{ ok, error? }` shape | No — fire-and-forget |
+| Use case | Autonomous loops, agent decisions | Request-boundary instrumentation in apps |
+
+Same backend, same event ingestion, same dashboard. The two coexist — a hybrid app can call `voight.log()` from a background worker AND `withTrace` / `log` from request handlers, under the same agent.
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="What if my framework doesn't preserve async context?">
+    `AsyncLocalStorage` is preserved across native `async`/`await`, `Promise.then`, Node's stream events, and most modern frameworks (Express, Fastify, Hono, Koa, Next.js Route Handlers).
+
+    A few cases lose it: explicit thread-pool workarounds (`worker_threads`), some legacy callback-based libraries, and certain promise libraries that drop `domain` context. If you use `withTrace` and the inner LLM call doesn't get tagged, the async context was probably dropped somewhere on the path.
+
+    Workaround: pass the tags explicitly to a fresh `withTrace` call deeper in the stack.
+  </Accordion>
+  <Accordion title="Can I open a trace from a webhook / queue worker?">
+    Yes — `withTrace` is just a function. Call it from your queue handler the same way you'd call it from an HTTP handler:
+
+    ```ts
+    queue.process('embed-doc', async (job) => {
+      await withTrace(
+        async () => { /* your handler */ },
+        { routeTag: 'queue:embed-doc', tags: { jobId: job.id } },
+      )
+    })
+    ```
+
+    The trace lifecycle matches the job lifecycle.
+  </Accordion>
+  <Accordion title="Can I tag without using withTrace?">
+    Not via `tags`. The wrapper accepts a top-level `agent` and `privacy` option, but per-request tagging is scoped to `withTrace`. This is deliberate — global mutable tags on a wrapper instance would be racy across concurrent requests.
+
+    If you really need static tags (e.g. `env: 'production'` everywhere), you can wrap a single `withTrace` at process boot and run your whole app inside it, but the typical pattern is per-request `withTrace`.
+  </Accordion>
+  <Accordion title="What's the maximum size of tags?">
+    Tags are flattened into `metadata.tags` on every event. Practical limit is what Postgres / your JSON column can store comfortably — keep tag values short strings (under 256 chars). The dashboard truncates display at 64 chars per value.
+
+    For longer attributes (full user records, structured payloads), use `metadata.detail` on individual events via the [library-mode SDK](/sdk/library-mode) — that's the right slot.
+  </Accordion>
+</AccordionGroup>
+
+## Next
+
+- [Per-user spend](/concepts/per-user-spend) — the killer use case for `withTrace({ tags })`
+- [OpenAI SDK](/ai-apps/openai) — `wrapOpenAI` + everything captured per LLM call
+- [Anthropic SDK](/ai-apps/anthropic) — `wrapAnthropic` + everything captured per LLM call
+- [AI Apps overview](/ai-apps/overview) — what the dashboard renders from these traces

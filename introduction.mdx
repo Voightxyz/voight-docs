@@ -1,19 +1,30 @@
 ---
 title: Introduction
-description: "Real-time observability for AI coding agents, autonomous workflows, and production LLM apps."
+description: "Real-time observability for AI coding agents, autonomous workflows, and production LLM apps — with per-user cost attribution."
 ---
 
 Voight captures every prompt, tool call, model response, decision, and on-chain transaction your agents and AI applications make. The dashboard renders them as a live timeline. The explorer makes selected agents publicly discoverable on Solana.
+
+If you ship LLM features to end-users, Voight also answers the question nobody else does cleanly: **what does each user cost me?** One line of code at your request boundary, no PII handoff required — full pattern on the [per-user spend](/concepts/per-user-spend) page.
 
 ## Five surfaces, one event stream
 
 | Surface | Lives at | What it's for | Reference |
 | --- | --- | --- | --- |
 | **Dashboard** | `voight.xyz/dashboard` | Live timeline, agents, alerts, cost + token KPIs | [Events](/concepts/events) |
+| **AI Apps** | `voight.xyz/dashboard/ai-apps` | Production LLM-app observability — Overview / Traces / Models / Tools / Users | [AI Apps overview](/ai-apps/overview) |
 | **Explorer** | `voight.xyz/explore` | Public agent profiles, on-chain identity, reputation | [Agents](/concepts/agents) |
-| **Coding SDK** | `@voightxyz/sdk` on npm | Hook Claude Code, Cursor, or any TS/JS agent you build yourself | [Quickstart](/quickstart) |
-| **App SDKs** | `@voightxyz/openai` · `@voightxyz/anthropic` | Wrap your provider SDK in production apps — automatic LLM-call capture | [OpenAI SDK](/ai-apps/openai) · [Anthropic SDK](/ai-apps/anthropic) |
+| **Coding SDK** | `@voightxyz/sdk` on npm | Hook Claude Code or Cursor (Codex in active fix), or any TS/JS agent you build yourself | [Quickstart](/quickstart) |
+| **App SDKs** | `@voightxyz/openai` · `@voightxyz/anthropic` | Wrap your provider SDK in production apps — automatic LLM-call capture | [OpenAI](/ai-apps/openai) · [Anthropic](/ai-apps/anthropic) |
 | **HTTP API** | `POST /v1/events` | Language-agnostic event ingestion — Python, Go, Rust, anything | [API reference](/api-reference/events) |
+
+## What Voight is for
+
+Three audiences, one product:
+
+- **You're building an AI coding agent or autonomous bot.** Wire the [coding SDK](/quickstart) into your IDE or import [library mode](/sdk/library-mode) — every prompt, tool call, error, and Solana tx lands in the dashboard with zero code changes.
+- **You're shipping an LLM-powered feature to end-users.** Wrap your OpenAI / Anthropic client with the [App SDKs](/ai-apps/openai). Every call gets captured with full token/cost breakdown. Add [`withTrace`](/ai-apps/tracing) at your request boundary to group calls per request and attribute cost per end-user.
+- **You sell AI-powered tools to other developers.** The [per-user spend](/concepts/per-user-spend) pattern lets you answer "what does each of my customer's customers cost me?" without integrating an analytics SDK on the client side.
 
 ## Primitives
 
@@ -21,13 +32,18 @@ Voight captures every prompt, tool call, model response, decision, and on-chain 
 - **Event** — a single observation: prompt, tool call, decision, error, cost record.
 - **Trace** — a group of events sharing a `traceId`, typically one user request or workflow.
 - **Session** — a time-bounded run of an agent.
+- **Tag** — a free-form `key=value` pair attached to events inside a [`withTrace`](/ai-apps/tracing) block; the foundation of per-user / per-tenant / per-feature attribution.
 
 ## Privacy
 
 Three capture levels — **Minimal** (metadata only), **Standard** (full content with local PII scrubbing), **Full** (raw). Picked once at install, switchable per session via env var. The dashboard renders a per-event chip showing which level captured each row.
 
+The numeric data — tokens, USD, latency, tool names, tags — passes through every level unchanged. KPIs and charts work identically in all three. You only lose prompt/response content in Minimal.
+
 See the [privacy overview](/privacy/overview) for the field-by-field breakdown.
 
 ## Next
 
-[Quickstart](/quickstart) — events streaming in 30 seconds.
+- [Quickstart](/quickstart) — events streaming in 30 seconds (any of four install paths)
+- [AI Apps overview](/ai-apps/overview) — the dashboard section for production LLM apps
+- [Per-user spend](/concepts/per-user-spend) — one line of code to attribute cost per end-user

@@ -5,7 +5,90 @@ description: "What shipped, when."
 
 SDK releases follow [semver](https://semver.org/). Backend and dashboard ship continuously from `main` without version tags.
 
-## SDK changelog
+Three SDKs ship from separate packages:
+
+- **`@voightxyz/sdk`** — coding-agent hooks + library mode (autonomous bots)
+- **`@voightxyz/openai`** — OpenAI Node SDK wrapper for production apps
+- **`@voightxyz/anthropic`** — Anthropic Node SDK wrapper for production apps
+
+## `@voightxyz/openai` changelog
+
+### 0.1.6 — 2026-05-17
+
+**`withTrace({ tags })` — per-user / per-tenant attribution.**
+
+`withTrace` now accepts a `tags` map alongside `routeTag`. Every wrapped LLM call inside the block gets stamped with `metadata.tags` automatically via `AsyncLocalStorage`. This is the one-line code change that lights up the dashboard's [Users sub-tab](/ai-apps/overview#users-sub-tab) and powers [per-user spend](/concepts/per-user-spend) attribution.
+
+```ts
+await withTrace(
+  async () => { /* handler */ },
+  { tags: { userId: req.user.id, plan: req.user.plan } },
+)
+```
+
+Tags propagate to both Chat Completions and Responses events. Missing or empty tags are a no-op — no behaviour change for callers not using the feature.
+
+### 0.1.5 — 2026-05-17
+
+**`withTrace` + `log` — request-boundary trace grouping.**
+
+New exports:
+
+- `withTrace(fn, { routeTag })` opens a logical trace; every wrapped LLM call inside the block is grouped under one trace card in the dashboard.
+- `log(message, extra?)` emits a free-form event inside the current trace — interleaved with LLM calls in the timeline.
+
+Backed by Node's `AsyncLocalStorage` — no signature threading, no middleware required. Mixes cleanly with `@voightxyz/anthropic` (same backing store across both packages).
+
+### 0.1.0 — 2026-05-15
+
+**Initial release.**
+
+OpenAI Node SDK wrapper. Captures:
+
+- Chat Completions (`client.chat.completions.create`) — non-streaming + streaming, tool calling
+- Responses API (`client.responses.create`) — non-streaming + streaming, function calling, reasoning models
+- Token breakdown (input / output / cache reads / reasoning)
+- Tool calls (full array per event)
+- Latency, finish reason, error capture
+
+Three privacy levels (Minimal / Standard / Full) with local PII scrubbing on Standard.
+
+## `@voightxyz/anthropic` changelog
+
+### 0.1.6 — 2026-05-17
+
+**`withTrace({ tags })` — per-user / per-tenant attribution.**
+
+Mirror of `@voightxyz/openai` 0.1.6. Every wrapped `messages.create` call inside a `withTrace` block gets `metadata.tags` stamped automatically. Powers the dashboard's [Users sub-tab](/ai-apps/overview#users-sub-tab) and [per-user spend](/concepts/per-user-spend) attribution.
+
+```ts
+await withTrace(
+  async () => { /* handler */ },
+  { tags: { userId: req.user.id, plan: req.user.plan } },
+)
+```
+
+### 0.1.5 — 2026-05-17
+
+**`withTrace` + `log` — request-boundary trace grouping.**
+
+Mirror of `@voightxyz/openai` 0.1.5. Same async-context store under the hood — import `withTrace` from either package; mixing providers in one trace works without setup.
+
+### 0.1.0 — 2026-05-15
+
+**Initial release.**
+
+Anthropic Node SDK wrapper. Captures:
+
+- `messages.create` — non-streaming + streaming, tool use
+- Token breakdown (input / output / cache reads / cache creations)
+- Path-A cache pricing (1.25× creation, 0.10× read applied server-side)
+- Tool calls (flattened to `{ id, name, arguments }` matching the OpenAI wrapper)
+- Latency, stop reason, error capture
+
+Three privacy levels (Minimal / Standard / Full) with local PII scrubbing on Standard.
+
+## `@voightxyz/sdk` changelog
 
 ### 0.6.3 — 2026-05-14
 
@@ -163,6 +246,6 @@ The SDK now walks the local transcript JSONL on every PostToolUse, finds the ass
 
 ## Stay updated
 
-- npm: [`@voightxyz/sdk`](https://www.npmjs.com/package/@voightxyz/sdk)
-- GitHub: [`voightxyz/voight-sdk`](https://github.com/Voightxyz/voight-sdk) (releases tagged)
+- npm: [`@voightxyz/sdk`](https://www.npmjs.com/package/@voightxyz/sdk) · [`@voightxyz/openai`](https://www.npmjs.com/package/@voightxyz/openai) · [`@voightxyz/anthropic`](https://www.npmjs.com/package/@voightxyz/anthropic)
+- GitHub: [`voightxyz/voight-sdk`](https://github.com/Voightxyz/voight-sdk) · [`voightxyz/voight-openai`](https://github.com/Voightxyz/voight-openai) · [`voightxyz/voight-anthropic`](https://github.com/Voightxyz/voight-anthropic) (releases tagged)
 - Twitter: [@voightxyz](https://x.com/voightxyz)

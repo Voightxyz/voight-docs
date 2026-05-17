@@ -1,0 +1,264 @@
+---
+title: Per-user spend
+description: "Track AI cost and traffic per end-user — one line of code, GDPR-safe, works with any auth system."
+---
+
+If you sell to other developers shipping an AI product (Auth0 of LLMs, multi-tenant SaaS, B2B copilots), the question your customers ask first is:
+
+> *"What's the cost per end-user this month?"*
+
+Per-user spend is the answer. **One line of code at your request boundary** tags every LLM call with the user it belongs to. The dashboard's **Users sub-tab** then aggregates spend, traces, tokens, and tool use per user — without you handing Voight any PII you don't already own.
+
+## The 1-line pattern
+
+Wrap your provider client once (the [OpenAI](/ai-apps/openai) or [Anthropic](/ai-apps/anthropic) SDK), then at your request boundary call `withTrace` and pass a `tags.userId`:
+
+```ts
+import { withTrace } from '@voightxyz/openai'   // or '@voightxyz/anthropic'
+
+app.post('/api/chat', async (req, res) => {
+  await withTrace(
+    async () => {
+      // your existing handler — every LLM call inside this block
+      // is automatically tagged with userId, plan, org, etc.
+      const reply = await openai.chat.completions.create({ ... })
+      res.json({ reply })
+    },
+    {
+      routeTag: 'POST /api/chat',
+      tags: {
+        userId: req.user.id,              // ← the one line
+        plan: req.user.plan,
+        org: req.user.organizationId,
+      },
+    },
+  )
+})
+```
+
+That's it. The wrapper stamps `metadata.tags = { userId, plan, org }` on every event inside the `withTrace` block via `AsyncLocalStorage` — no manual passing through call sites, no middleware to wire.
+
+## Why this design
+
+We considered three alternatives and rejected them:
+
+| Pattern | Why we didn't | Why explicit tagging won |
+| --- | --- | --- |
+| Auto-detect user from request headers | Fragile (every auth system different), and means Voight reads your auth context | You stay in control of what's tagged |
+| Require a "Voight user object" via dashboard | Forces a sync flow, breaks for SSO/SCIM apps | Zero coupling to user-management |
+| Capture client IP / fingerprint | GDPR landmine, useless for B2B SaaS | Tags are your IDs, not ours |
+
+**You decide what `userId` is** — a database ID, an Auth0 `sub`, a Clerk `user.id`, a hashed email, anything. Voight stores it as a tag string. We never see the underlying user record.
+
+## Examples for common auth systems
+
+<AccordionGroup>
+  <Accordion title="Auth0 (Express middleware)">
+    ```ts
+    import { withTrace } from '@voightxyz/openai'
+    import { auth } from 'express-oauth2-jwt-bearer'
+
+    app.use(auth({ audience: 'api', issuerBaseURL: '...' }))
+
+    app.post('/api/chat', async (req, res) => {
+      await withTrace(
+        async () => { /* your handler */ },
+        {
+          routeTag: 'POST /api/chat',
+          tags: {
+            userId: req.auth.payload.sub,                  // "auth0|abc123"
+            org: req.auth.payload['https://app/org_id'],
+          },
+        },
+      )
+    })
+    ```
+  </Accordion>
+  <Accordion title="Clerk (Next.js Route Handler)">
+    ```ts
+    import { withTrace } from '@voightxyz/openai'
+    import { auth } from '@clerk/nextjs/server'
+
+    export async function POST(req: Request) {
+      const { userId, orgId } = await auth()
+      return withTrace(
+        async () => { /* your handler */ },
+        {
+          routeTag: 'POST /api/chat',
+          tags: { userId, org: orgId, plan: req.headers.get('x-plan') },
+        },
+      )
+    }
+    ```
+  </Accordion>
+  <Accordion title="NextAuth.js / Auth.js (App Router)">
+    ```ts
+    import { withTrace } from '@voightxyz/openai'
+    import { auth } from '@/auth'
+
+    export async function POST(req: Request) {
+      const session = await auth()
+      return withTrace(
+        async () => { /* your handler */ },
+        {
+          routeTag: 'POST /api/chat',
+          tags: {
+            userId: session?.user?.id ?? 'anonymous',
+            plan: session?.user?.plan ?? 'free',
+          },
+        },
+      )
+    }
+    ```
+  </Accordion>
+  <Accordion title="Custom JWT (any framework)">
+    ```ts
+    import { withTrace } from '@voightxyz/openai'
+    import jwt from 'jsonwebtoken'
+
+    app.post('/api/chat', async (req, res) => {
+      const token = req.headers.authorization?.replace('Bearer ', '')
+      const claims = jwt.verify(token, process.env.JWT_SECRET) as any
+
+      await withTrace(
+        async () => { /* your handler */ },
+        {
+          routeTag: 'POST /api/chat',
+          tags: { userId: claims.sub, plan: claims.plan },
+        },
+      )
+    })
+    ```
+  </Accordion>
+  <Accordion title="Anonymous / unauthenticated paths">
+    ```ts
+    // Public marketing assistant — no user, but you still want
+    // per-session attribution and abuse signals.
+    await withTrace(
+      async () => { /* handler */ },
+      {
+        routeTag: 'POST /api/public-chat',
+        tags: {
+          userId: `anon_${req.cookies.session_id}`,    // stable per browser
+          source: 'marketing-site',
+        },
+      },
+    )
+    ```
+
+    The Users sub-tab will list anonymous users alongside authenticated ones, prefixed by your chosen tag value. You decide the convention.
+  </Accordion>
+</AccordionGroup>
+
+## What you see in the dashboard
+
+Open the [Users sub-tab](https://voight.xyz/dashboard/ai-apps) under **AI Apps**. You get one row per unique `userId` value, sorted by spend (descending by default):
+
+| Column | Aggregated from |
+| --- | --- |
+| **User** | `metadata.tags.userId` — your tag value, shown verbatim |
+| **Spend (USD)** | Sum of cost per event for that user in the time window |
+| **Traces** | Number of `withTrace` blocks that user triggered |
+| **Tokens** | Input + output + cache reads + cache creations |
+| **Last seen** | `MAX(timestamp)` for any event tagged with that user |
+| **Top model** | The model that user spent the most on |
+
+Click any row → drilldown to that user's traces (every `withTrace` block they triggered), then into individual events (every LLM call, with prompt, response, tokens, latency).
+
+The **User filter pill** in the top bar lets you narrow the entire AI Apps section (Overview, Traces, Models, Tools) to one user — same way the Provider and Agent pills work.
+
+## Empty state — why don't I see any users?
+
+If you've wired the wrapper but the Users tab shows zero users, it's almost always one of these:
+
+1. **You're not calling `withTrace`** — the wrapper captures everything, but `tags` only flow into events that ran inside a `withTrace` block. Calls made outside it have no user attribution. Wrap your request boundary.
+2. **You're not passing `tags.userId`** — `withTrace` accepts an optional `tags` map. Without `userId`, the event has no user to attribute to.
+3. **Time window** — the Users tab respects the dashboard's window selector (default 28 days). Switch to 7d or 1d if you only deployed today.
+4. **Privacy: minimal** — Minimal mode strips prompts and responses but keeps tokens, costs, and tags. Users tab works in Minimal. If you set up something stricter (custom redaction layer), confirm your tags aren't being filtered out.
+
+A typical fix is one line of code (the `tags.userId` field on `withTrace`). After your next request the user appears in the dashboard within ~2 seconds.
+
+## Multiple tags, multiple dimensions
+
+`tags` is a flat string-to-string map. You can attribute by any dimension you care about:
+
+```ts
+tags: {
+  userId: req.user.id,
+  plan: req.user.plan,            // 'free' / 'pro' / 'enterprise'
+  org: req.user.organizationId,   // multi-tenant
+  feature: 'summarize',           // which feature triggered this LLM call
+  env: process.env.NODE_ENV,      // 'production' vs 'staging'
+  region: process.env.FLY_REGION,
+}
+```
+
+The dashboard surfaces `userId` as the primary user dimension (drives the Users sub-tab). The other tags are queryable via the API — `GET /v1/me/ai-apps/overview?tag.plan=pro` returns metrics scoped to Pro users only. Future dashboard releases will surface tag-based segmentation natively (cost-per-plan, cost-per-feature).
+
+## FAQ
+
+<AccordionGroup>
+  <Accordion title="What about GDPR?">
+    Tag values are stored verbatim as strings. **Choose what to send accordingly.**
+
+    - ✅ Database IDs, Auth0 `sub`, Clerk IDs — these are pseudonymous identifiers, not personal data on their own
+    - ✅ Hashed emails (SHA-256), opaque session IDs
+    - ⚠️ Raw email addresses, names, IPs — personal data; only send if your DPA covers it
+    - ⚠️ Anonymous user fingerprints — may be personal data depending on jurisdiction
+
+    A user-deletion request maps to deleting all events tagged with that user. The [Data handling](/privacy/data-handling) page covers retention and deletion in detail.
+  </Accordion>
+  <Accordion title="Does this work in multi-tenant SaaS?">
+    Yes — that's the primary use case. Tag every request with `userId` (the end-user inside your customer's tenant) **and** `org` (the customer tenant). Then:
+
+    - Filter the dashboard by `org=acme-corp` to see one tenant's traffic
+    - Drill into individual users inside that tenant
+    - Export per-tenant cost reports via `GET /v1/me/ai-apps/users?tag.org=acme-corp`
+
+    Each tenant gets a Voight account if they want their own dashboard, but you can also operate a single Voight account for all customers and surface per-tenant views internally.
+  </Accordion>
+  <Accordion title="What if I don't have auth?">
+    If your app is public (a marketing site assistant, a free demo), still call `withTrace` — just use a stable browser-scoped identifier for `userId`:
+
+    ```ts
+    tags: { userId: `anon_${cookies.sessionId}` }
+    ```
+
+    This gives you abuse signals (one anon hammering 1000 calls/hour) and per-session cost visibility without auth.
+  </Accordion>
+  <Accordion title="Does adding tags slow down my app?">
+    No. `withTrace` uses Node's `AsyncLocalStorage` to maintain the tag scope — no synchronous overhead, no extra network calls. Tags are appended to the event payload that the wrapper was going to send anyway. The captured numbers are identical to what you'd see without tags.
+  </Accordion>
+  <Accordion title="Can I tag from the client side?">
+    No — `withTrace` runs server-side (where the wrapped OpenAI / Anthropic client lives). The tag value is set once at the request boundary in your backend and propagates to every LLM call that handler triggers.
+
+    If you have a serverless setup (Next.js Route Handlers, Vercel Functions, AWS Lambda), `withTrace` still works — `AsyncLocalStorage` is part of Node's runtime, not tied to long-lived processes.
+  </Accordion>
+  <Accordion title="What if my customers want their own dashboard?">
+    Two paths:
+
+    1. **You operate one Voight account**, tag by `org`, and expose internal per-tenant views to your customers via your own admin UI (queryable via `/v1/me/ai-apps/*`).
+    2. **Each customer has their own Voight account** with their own API key. You run two wrappers in parallel (yours for ops; theirs for their customer-facing dashboard).
+
+    Most customers start at (1) and graduate to (2) when a single enterprise tenant needs SOC 2 access logs of their own.
+  </Accordion>
+</AccordionGroup>
+
+## Wiring it end-to-end
+
+If you haven't installed the wrapper yet, the order is:
+
+1. **Install the wrapper** for your provider — [OpenAI](/ai-apps/openai) or [Anthropic](/ai-apps/anthropic)
+2. **Wrap your client** at module load time (one place in your codebase)
+3. **Call `withTrace` at your request boundary** with `tags.userId`
+4. **Open the dashboard** → AI Apps → Users sub-tab
+5. **Profit** (literally — you now know which users to upsell, throttle, or upgrade)
+
+The [AI Apps overview](/ai-apps/overview) walks through the full dashboard surface — Overview / Traces / Models / Tools / Users — and how the tags you set here drive every panel.
+
+## Next
+
+- [AI Apps overview](/ai-apps/overview) — the dashboard section that surfaces per-user data
+- [Tracing](/ai-apps/tracing) — the `withTrace` + `log` API in full
+- [OpenAI SDK](/ai-apps/openai) — wrap your OpenAI client
+- [Anthropic SDK](/ai-apps/anthropic) — wrap your Anthropic client
