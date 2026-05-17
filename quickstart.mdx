@@ -41,10 +41,27 @@ Full reference in [Library mode](/sdk/library-mode).
 
 ### C · Production LLM app (OpenAI / Anthropic in user-facing flows)
 
-Wrap your provider client once and every model call is captured automatically — prompts, tokens, cache reads, tool calls, latency, errors. Per-user spend attribution with one extra line of code.
+If your app already uses `openai` or `@anthropic-ai/sdk` (or both), wrap your clients once and every model call is captured — prompts, tokens, cache reads, tool calls, latency, errors. Per-user spend attribution with one extra line of code.
+
+Two ways to install:
+
+**C1 · Wizard** (recommended — 30 seconds)
 
 ```bash
-# pick the one matching your provider
+cd your-app
+npx -y @voightxyz/sdk init
+```
+
+The wizard detects `openai` and `@anthropic-ai/sdk` in your `package.json`, asks for your Voight API key, validates it against `api.voight.xyz`, and writes `src/lib/voight.ts` with the wrapped clients ready to import. Tailors the usage snippet to your framework (Next.js or vanilla) and prints the right install command for your package manager (pnpm / yarn / bun / npm).
+
+Provider keys (`OPENAI_API_KEY` / `ANTHROPIC_API_KEY`) stay in your app's env — Voight never sees them. Full deep-dive in [Wizard](/ai-apps/wizard).
+
+**C2 · Manual** (you prefer to wire it yourself)
+
+Skip the wizard and install the wrappers directly:
+
+```bash
+# pick the one matching your provider (or both)
 npm install openai @voightxyz/openai
 npm install @anthropic-ai/sdk @voightxyz/anthropic
 ```
@@ -55,7 +72,7 @@ import { wrapOpenAI, withTrace } from '@voightxyz/openai'
 
 const openai = wrapOpenAI(new OpenAI(), {
   agent: 'production-chat-api',
-  voightApiKey: process.env.VOIGHT_KEY,
+  privacy: 'standard',
 })
 
 app.post('/api/chat', async (req, res) => {
@@ -75,7 +92,7 @@ app.post('/api/chat', async (req, res) => {
 })
 ```
 
-The `tags` map drives [per-user spend tracking](/concepts/per-user-spend) — the dashboard's **Users sub-tab** populates with per-customer cost as soon as your first request lands. Same pattern with `@voightxyz/anthropic` — see the [OpenAI](/ai-apps/openai) and [Anthropic](/ai-apps/anthropic) SDK pages for the full surface.
+Set `VOIGHT_KEY` in your runtime environment (or in `.env.local`). The `tags` map drives [per-user spend tracking](/concepts/per-user-spend) — the dashboard's **Users sub-tab** populates with per-customer cost as soon as your first request lands. Full reference: [OpenAI SDK](/ai-apps/openai) · [Anthropic SDK](/ai-apps/anthropic).
 
 ### D · Any language over HTTP
 

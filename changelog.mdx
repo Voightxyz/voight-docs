@@ -55,6 +55,14 @@ Three privacy levels (Minimal / Standard / Full) with local PII scrubbing on Sta
 
 ## `@voightxyz/anthropic` changelog
 
+### 0.1.7 — 2026-05-17
+
+**Loosen `@anthropic-ai/sdk` peer-dependency from `>=0.30.0` to `>=0.27.0`.**
+
+Real-world projects on older SDK versions hit `ERESOLVE` on install (Anthropic's own `customer-support-agent` quickstart pins `^0.27.1`; `financial-data-analyst` pinned `^0.29.0` — both rejected `0.1.6`). The `0.30.0` floor was overly conservative — the wrapper consumes the SDK purely structurally (no type imports, only runtime field reads with defensive fallbacks), so older releases work fine.
+
+Runtime verified against `@anthropic-ai/sdk` 0.29.2 and 0.96.0. 92/92 tests still green. No code changes — peer-dependency metadata only.
+
 ### 0.1.6 — 2026-05-17
 
 **`withTrace({ tags })` — per-user / per-tenant attribution.**
@@ -89,6 +97,33 @@ Anthropic Node SDK wrapper. Captures:
 Three privacy levels (Minimal / Standard / Full) with local PII scrubbing on Standard.
 
 ## `@voightxyz/sdk` changelog
+
+### 0.6.4 — 2026-05-17
+
+**New `init` sub-command — scaffold Voight into a production app with one wizard.**
+
+For projects that already use the OpenAI or Anthropic Node SDK in production, `init` automates the install:
+
+```bash
+cd your-app
+npx -y @voightxyz/sdk init
+```
+
+The wizard:
+
+1. Reads `package.json` and detects `openai` and/or `@anthropic-ai/sdk` already in your deps. Aborts cleanly if neither is present.
+2. Detects your package manager (pnpm / yarn / bun / npm) and your framework (Next.js or vanilla) to tailor the install command + usage snippet at the end.
+3. Prompts for privacy level (Standard recommended for customer-facing apps), Voight API key, and agent name.
+4. Validates the key against `api.voight.xyz` before writing anything — typo'd keys get caught now instead of in production.
+5. Generates `src/lib/voight.ts` with the wrapped clients for the providers it detected, plus a header comment explaining how to adjust if your provider keys come from AWS Secrets Manager / Vault / Doppler instead of env vars.
+6. Appends `VOIGHT_KEY` to `.env.local`. Provider keys (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`) are never asked for — they belong to your app, the Voight wrapper never sees them.
+7. Prints the right install command for your package manager + a usage snippet (Next.js Route Handler or Express, depending on what's in your deps).
+
+### Safety guarantees
+
+`init` lives in a new file `src/init.ts` with **zero edits to `setup.ts`, `hook.ts`, or any other module**. It never touches `~/.claude`, `~/.cursor`, or `~/.codex` — only writes inside `process.cwd()`. Users of `setup` get byte-identical behaviour to 0.6.3; 256 tests verde (was 214 + 42 new for `init`).
+
+If you'd rather wire things up manually (no wizard), the package pages for [OpenAI](/ai-apps/openai) and [Anthropic](/ai-apps/anthropic) walk through the same install in three commands.
 
 ### 0.6.3 — 2026-05-14
 

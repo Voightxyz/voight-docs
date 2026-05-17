@@ -75,6 +75,7 @@
       "group": "AI Apps",
       "pages": [
         "ai-apps/overview",
+        "ai-apps/wizard",
         "concepts/per-user-spend",
         "ai-apps/tracing",
         "ai-apps/openai",

@@ -7,6 +7,18 @@ description: "Wrap your Anthropic client and capture every Messages call without
 
 Same backend, same dashboard as [`@voightxyz/openai`](/ai-apps/openai) and [library mode](/sdk/library-mode) — events from all three land side-by-side under the same agent.
 
+## Quick setup (recommended)
+
+From the root of your app:
+
+```bash
+npx -y @voightxyz/sdk init
+```
+
+The [wizard](/ai-apps/wizard) detects `@anthropic-ai/sdk` in your `package.json`, prompts for your Voight key + privacy level, validates the key, and writes a ready-to-import `src/lib/voight.ts` with the wrapped client. 30 seconds, zero copy-paste.
+
+Continue below if you'd rather wire it manually.
+
 ## Install
 
 ```bash

@@ -7,6 +7,18 @@ description: "Wrap your OpenAI client and capture every model call without chang
 
 This is the same SDK-instrumentation model Sentry / Vercel AI / LangChain use. Same backend, same dashboard as [`@voightxyz/anthropic`](/ai-apps/anthropic) and [library mode](/sdk/library-mode) — events from all three land side-by-side under the same agent.
 
+## Quick setup (recommended)
+
+From the root of your app:
+
+```bash
+npx -y @voightxyz/sdk init
+```
+
+The [wizard](/ai-apps/wizard) detects `openai` in your `package.json`, prompts for your Voight key + privacy level, validates the key, and writes a ready-to-import `src/lib/voight.ts` with the wrapped client. 30 seconds, zero copy-paste.
+
+Continue below if you'd rather wire it manually.
+
 ## Install
 
 ```bash

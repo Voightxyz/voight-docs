@@ -1,0 +1,215 @@
+---
+title: Wizard
+description: "npx @voightxyz/sdk init — scaffold Voight into a production app in 30 seconds."
+---
+
+`init` is the wizard sub-command in `@voightxyz/sdk` for apps that already call OpenAI or Anthropic in production. It automates the install of the App SDKs ([`@voightxyz/openai`](/ai-apps/openai) and [`@voightxyz/anthropic`](/ai-apps/anthropic)) so you don't have to copy snippets from the docs.
+
+Run it from the root of your app:
+
+```bash
+cd your-app
+npx -y @voightxyz/sdk init
+```
+
+That's the entire setup.
+
+## What the wizard does
+
+The flow is single-pass — no daemon, no background services, no follow-up commands:
+
+1. **Detects providers**. Reads `package.json` (both `dependencies` and `devDependencies`). If neither `openai` nor `@anthropic-ai/sdk` is found, the wizard aborts cleanly and explains what to install.
+2. **Detects package manager**. Looks for `pnpm-lock.yaml` → `yarn.lock` → `bun.lockb` → falls back to npm. The install command printed at the end matches what you actually use.
+3. **Detects framework**. Looks for `next` in deps. If present, the usage snippet at the end uses Next.js Route Handler shape (`export async function POST`); otherwise Express style (`app.post('/api/chat', ...)`).
+4. **Prompts for privacy level**. Three options:
+   - **Minimal** — metadata only (tokens, latency, cost). No prompts or responses captured.
+   - **Standard ★** — full content with [12-pattern PII scrubbing](/privacy/pii-patterns). Required for customer-facing apps where end-user PII flows through prompts.
+   - **Full** — raw, no scrubbing. Debugging only.
+5. **Prompts for the Voight API key** (`vk_...`). Validates it against `api.voight.xyz` before writing anything — typo'd keys get caught here, not in production.
+6. **Prompts for an agent name**. Defaults to your `package.json` name; press enter to accept or type a custom one.
+7. **Writes `src/lib/voight.ts`** (or `lib/voight.ts` if your project doesn't have `src/`). Contains the wrapped clients for the providers it detected, plus a header comment explaining how to swap if your provider keys come from AWS Secrets Manager / Vault / Doppler instead of env.
+8. **Appends `VOIGHT_KEY` to `.env.local`**. Creates the file if absent. Existing `VOIGHT_KEY` lines are left alone.
+9. **Prints the install command + usage snippet**. The install command uses your package manager (e.g. `pnpm add @voightxyz/openai @voightxyz/anthropic` if pnpm-lock detected).
+
+## What it does NOT do
+
+- ❌ **Never touches `~/.claude`, `~/.cursor`, `~/.codex`** or any other path outside your project's `cwd`. This is the key difference from `setup` (which wires IDE hooks globally).
+- ❌ **Never asks for or stores your provider keys** (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`). Those belong to your app and stay there. The Voight wrapper instruments the requests but never reads the auth header.
+- ❌ **Never runs `npm install` for you**. We print the command so you can run it in your terminal — that way you stay in control of your lockfile (and we don't accidentally pin a version you didn't approve).
+- ❌ **Never overrides an existing `src/lib/voight.ts`**. If the file already exists, the wizard aborts and asks you to move it aside.
+
+## Example session
+
+```
+$ cd ~/projects/customer-support-saas
+$ npx -y @voightxyz/sdk init
+
+  Voight · init → /Users/jane/projects/customer-support-saas
+
+  ✓ Detected providers: openai (^4.79.2) + @anthropic-ai/sdk (^0.96.0)
+  ✓ Detected package manager: pnpm
+  ✓ Detected framework: Next.js
+
+  Privacy level for this project?
+
+    1) Minimal · metadata only (tokens, latency, cost)
+    2) Standard ★ Required for customer-facing apps — PII scrubbing on
+    3) Full · raw, no scrubbing (debugging only)
+
+  > 2
+
+  ✓ Privacy: standard
+
+  Now we need your Voight API key:
+    1. Open  → https://voight.xyz/dashboard
+    2. Sign in (Google / X / wallet)
+    3. Settings → Generate key → copy the vk_… secret
+
+  Paste it here: vk_aBcD…
+
+  ✓ Validating key with api.voight.xyz…
+  ✓ Key valid
+
+  Agent name (defaults to "customer-support-saas")? production-chat-api
+
+  ✓ Agent: production-chat-api
+
+  ✓ Wrote src/lib/voight.ts
+  ✓ Created .env.local with VOIGHT_KEY
+
+  Use it in your handlers:
+
+    // app/api/chat/route.ts
+    import { openai, withTrace } from '@/lib/voight'
+
+    export async function POST(req: Request) {
+      return withTrace(
+        async () => {
+          const r = await openai.chat.completions.create({ ... })
+          return Response.json({ reply: r.choices[0].message })
+        },
+        {
+          routeTag: 'POST /api/chat',
+          tags: { userId: 'user_123', plan: 'pro' },
+        },
+      )
+    }
+
+  One more step — install the wrappers:
+    pnpm add @voightxyz/openai @voightxyz/anthropic
+
+  Then open https://voight.xyz/dashboard/ai-apps
+```
+
+## Generated file
+
+`src/lib/voight.ts` after a dual-provider install with `agent: 'production-chat-api'`, `privacy: 'standard'`:
+
+```ts
+// ──────────────────────────────────────────────────────────────────
+// Voight observability — generated by `npx @voightxyz/sdk init`
+//
+// Both wrapped clients use the standard `new OpenAI()` /
+// `new Anthropic()` constructors, which read OPENAI_API_KEY and
+// ANTHROPIC_API_KEY from process.env. This is the convention for
+// most apps (the values typically live in .env / .env.local).
+//
+// If your provider keys come from elsewhere (AWS Secrets Manager,
+// HashiCorp Vault, Doppler, a database, etc.), adjust the
+// constructor calls below to pass the key explicitly, e.g.:
+//
+//   const openai = wrapOpenAI(
+//     new OpenAI({ apiKey: await loadFromVault('openai') }),
+//     { agent: 'production-chat-api', privacy: 'standard' }
+//   )
+//
+// The Voight wrapper never sees the provider key — it wraps
+// whatever client you construct.
+// ──────────────────────────────────────────────────────────────────
+
+import OpenAI from 'openai'
+import Anthropic from '@anthropic-ai/sdk'
+import { wrapOpenAI } from '@voightxyz/openai'
+import { wrapAnthropic } from '@voightxyz/anthropic'
+
+export const openai = wrapOpenAI(new OpenAI(), {
+  agent: 'production-chat-api',
+  privacy: 'standard',
+})
+
+export const anthropic = wrapAnthropic(new Anthropic(), {
+  agent: 'production-chat-api',
+  privacy: 'standard',
+})
+
+// Re-exports — import everything from one place.
+export { withTrace, log } from '@voightxyz/openai'
+```
+
+If only one provider is detected, only that provider's block is emitted. Single import path either way: `import { openai, anthropic, withTrace, log } from '@/lib/voight'`.
+
+## Non-interactive flags
+
+If you're scripting the install (CI, Dockerfile, dotfile bootstrap), pass everything as flags:
+
+```bash
+npx -y @voightxyz/sdk init \
+  --privacy=standard \
+  --key=vk_aBcD... \
+  --agent=production-chat-api
+```
+
+Reads `VOIGHT_KEY` and `VOIGHT_PRIVACY` from env too if you'd rather not pass them inline. Refuses to write anything if the key validation fails — same safety as the interactive flow.
+
+## Manual install (skip the wizard)
+
+The wizard is convenience, not requirement. If you'd rather wire things up by hand, the [OpenAI SDK](/ai-apps/openai) and [Anthropic SDK](/ai-apps/anthropic) pages walk through the same install — npm install, wrap your client, set `VOIGHT_KEY`. Three commands, no wizard.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="`No openai or @anthropic-ai/sdk detected in package.json`">
+    The wizard only operates on projects that already use one of those SDKs. If you're in a monorepo, `cd` into the app folder first (e.g. `cd apps/web`). If your project doesn't use either yet, install the provider SDK first:
+
+    ```bash
+    npm install openai
+    npm install @anthropic-ai/sdk
+    ```
+
+    Then re-run the wizard.
+  </Accordion>
+  <Accordion title="`Key validation failed: invalid key (401)`">
+    The key you pasted isn't recognised by `api.voight.xyz`. Common causes:
+
+    - Typo in the paste — Voight keys start with `vk_` and are about 50 characters
+    - The key was revoked — check [dashboard/settings](https://voight.xyz/dashboard/settings) and generate a new one
+    - Wrong key entirely (e.g. you pasted an OpenAI key by mistake)
+
+    Fix and re-run — no files were written.
+  </Accordion>
+  <Accordion title="`src/lib/voight.ts already exists`">
+    The wizard refuses to overwrite an existing file. Either move it aside (`mv src/lib/voight.ts src/lib/voight.ts.bak`) or delete it, then re-run.
+  </Accordion>
+  <Accordion title="`.env.local already has a VOIGHT_KEY entry`">
+    Not an error — the wizard leaves your existing `VOIGHT_KEY` alone instead of overwriting it. If you genuinely want to rotate the key, edit `.env.local` manually.
+  </Accordion>
+  <Accordion title="The wizard detected the wrong package manager">
+    The wizard picks the package manager whose lockfile it sees first (pnpm → yarn → bun → npm). If you have stale lockfiles from a previous tool, delete them. The wizard never runs the install itself — you can always run `pnpm add ...` / `yarn add ...` / `bun add ...` regardless of what the wizard printed.
+  </Accordion>
+</AccordionGroup>
+
+## Safety guarantees
+
+`init` is implemented in `src/init.ts` of `@voightxyz/sdk` with **zero edits** to the existing `setup`, `hook`, or any other module. It cannot affect users running `setup` or `hook` because:
+
+- The CLI dispatches by sub-command name (`setup` / `init` / `hook`) — the `setup` branch runs first and returns before reaching `init`.
+- `init.ts` has no imports from `setup.ts`. There's no shared mutable state, no shared global config.
+- `init` writes only inside `process.cwd()` — no `homedir()` calls, no `~/.config` paths. The shape is enforced by the test suite (256 tests, including a structural assertion that `init` never produces a write path outside cwd).
+
+## Next
+
+- [OpenAI SDK](/ai-apps/openai) — what the wrapped OpenAI client captures
+- [Anthropic SDK](/ai-apps/anthropic) — what the wrapped Anthropic client captures
+- [Tracing](/ai-apps/tracing) — `withTrace` and `log` in depth
+- [Per-user spend](/concepts/per-user-spend) — the `tags.userId` pattern the wizard's snippet demonstrates
+- [AI Apps overview](/ai-apps/overview) — the dashboard surface the wizard targets
