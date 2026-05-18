@@ -1,0 +1,135 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "palm",
+  "name": "Voight",
+  "colors": {
+    "primary": "#e5e6ea",
+    "light": "#f0f1f3",
+    "dark": "#bcbfc4"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "anchors": [
+      {
+        "anchor": "Documentation",
+        "icon": "book-open",
+        "groups": [
+          {
+            "group": "Getting started",
+            "pages": [
+              "introduction",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Concepts",
+            "pages": [
+              "concepts/agents",
+              "concepts/events",
+              "concepts/traces",
+              "concepts/sessions",
+              "privacy/overview"
+            ]
+          },
+          {
+            "group": "AI Apps",
+            "pages": [
+              "ai-apps/overview",
+              "ai-apps/wizard",
+              "concepts/per-user-spend",
+              "ai-apps/tracing",
+              "ai-apps/openai",
+              "ai-apps/anthropic"
+            ]
+          },
+          {
+            "group": "Install paths",
+            "pages": [
+              "sdk/library-mode",
+              "sdk/http-api"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "api-reference/events",
+              "api-reference/agents",
+              "api-reference/me",
+              "privacy/pii-patterns",
+              "privacy/data-handling"
+            ]
+          },
+          {
+            "group": "Resources",
+            "pages": [
+              "pricing",
+              "changelog"
+            ]
+          }
+        ]
+      }
+    ],
+    "global": {
+      "anchors": [
+        {
+          "anchor": "GitHub",
+          "href": "https://github.com/Voightxyz",
+          "icon": "github"
+        },
+        {
+          "anchor": "npm",
+          "href": "https://www.npmjs.com/package/@voightxyz/sdk",
+          "icon": "npm"
+        }
+      ]
+    }
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg",
+    "href": "https://voight.xyz"
+  },
+  "appearance": {
+    "default": "dark"
+  },
+  "background": {
+    "color": {
+      "dark": "#0a0a0f"
+    }
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Dashboard",
+        "href": "https://voight.xyz/dashboard"
+      },
+      {
+        "label": "Explorer",
+        "href": "https://voight.xyz/explore"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Get started",
+      "href": "https://voight.xyz/dashboard"
+    }
+  },
+  "search": {
+    "prompt": "Search the Voight docs"
+  },
+  "footer": {
+    "socials": {
+      "twitter": "https://x.com/voightxyz",
+      "github": "https://github.com/Voightxyz",
+      "website": "https://voight.xyz"
+    }
+  },
+  "fonts": {
+    "heading": {
+      "family": "Inter"
+    },
+    "body": {
+      "family": "Inter"
+    }
+  }
+}

@@ -121,7 +121,7 @@ The wizard:
 
 ### Safety guarantees
 
-`init` lives in a new file `src/init.ts` with **zero edits to `setup.ts`, `hook.ts`, or any other module**. It never touches `~/.claude`, `~/.cursor`, or `~/.codex` — only writes inside `process.cwd()`. Users of `setup` get byte-identical behaviour to 0.6.3; 256 tests verde (was 214 + 42 new for `init`).
+`init` lives in a new file `src/init.ts` with **zero edits to `setup.ts`, `hook.ts`, or any other module**. It never touches `~/.claude`, `~/.cursor`, or `~/.codex` — only writes inside `process.cwd()`. Users of `setup` get byte-identical behaviour to 0.6.3; 256 tests green (was 214 + 42 new for `init`).
 
 If you'd rather wire things up manually (no wizard), the package pages for [OpenAI](/ai-apps/openai) and [Anthropic](/ai-apps/anthropic) walk through the same install in three commands.
 
