@@ -1,0 +1,177 @@
+---
+title: Vercel AI SDK
+description: "OpenTelemetry SpanExporter for the Vercel AI SDK — capture every streamText / generateText / streamObject / generateObject call without touching your app code."
+---
+
+`@voightxyz/vercel-ai` is an OpenTelemetry `SpanExporter` that consumes the `experimental_telemetry` spans the [Vercel AI SDK](https://sdk.vercel.ai) emits natively. Register it once next to `@vercel/otel`, set `experimental_telemetry: { isEnabled: true }` on your `streamText` / `generateText` / `streamObject` / `generateObject` calls, and every call lands in your Voight dashboard with prompts, tokens, tool calls, cache reads, latency, and errors.
+
+Same backend and dashboard as [`@voightxyz/openai`](/ai-apps/openai) + [`@voightxyz/anthropic`](/ai-apps/anthropic). Events from all three packages land side-by-side under the same agent.
+
+## Why an OTel SpanExporter
+
+The Vercel AI SDK emits OpenTelemetry spans natively when `experimental_telemetry` is enabled — the same wire format every other LLM-observability tool listed in the [Vercel AI SDK docs](https://sdk.vercel.ai/providers/observability) consumes (Langfuse, Helicone, Phoenix, Braintrust, Datadog, Sentry, Weights & Biases). We follow the same contract so you can:
+
+- Wire Voight alongside one of those tools via `MultiSpanProcessor`, or
+- Drop in Voight as the sole observability provider,
+
+with the same code path either way. No vendor lock, no custom middleware.
+
+## Install
+
+```bash
+npm install ai @ai-sdk/openai @vercel/otel @voightxyz/vercel-ai
+```
+
+`@voightxyz/vercel-ai` declares `@opentelemetry/api` and `@opentelemetry/sdk-trace-base` as peer dependencies, and `ai` as an optional peer. Bring your own provider package (`@ai-sdk/openai`, `@ai-sdk/anthropic`, …).
+
+Requirements:
+
+- Node.js 18+
+- Vercel AI SDK 6.0.0+
+- A Voight API key (`vk_…`) — generate one at [voight.xyz/dashboard/settings](https://voight.xyz/dashboard/settings)
+
+## Quick start
+
+### 1. Register the exporter via `instrumentation.ts`
+
+```ts
+// instrumentation.ts (Next.js App Router) or any OTel bootstrap.
+import { registerOTel } from '@vercel/otel'
+import { VoightExporter } from '@voightxyz/vercel-ai'
+
+export function register() {
+  registerOTel({
+    serviceName: 'my-app',
+    traceExporter: new VoightExporter({
+      agent: 'production-chat-api',
+      privacy: 'standard',
+    }),
+  })
+}
+```
+
+### 2. Enable telemetry on your LLM calls
+
+```ts
+import { openai } from '@ai-sdk/openai'
+import { streamText } from 'ai'
+
+const result = streamText({
+  model: openai('gpt-4o-mini'),
+  prompt: req.body.prompt,
+  experimental_telemetry: {
+    isEnabled: true,
+    functionId: 'stream-text',
+  },
+})
+```
+
+### 3. Set `VOIGHT_KEY`
+
+```bash
+# .env.local
+VOIGHT_KEY=vk_your_key_here
+```
+
+That's it — every wrapped `streamText` / `generateText` / `streamObject` / `generateObject` call is captured automatically. Visit your [Voight dashboard](https://voight.xyz/dashboard/ai-apps) to see them in real time.
+
+## Per-user attribution
+
+For production apps where you want to attribute cost per end-user with one line of code, pass `metadata` on `experimental_telemetry`:
+
+```ts
+const result = streamText({
+  model: openai('gpt-4o-mini'),
+  prompt: req.body.prompt,
+  experimental_telemetry: {
+    isEnabled: true,
+    functionId: 'stream-text',
+    metadata: {
+      userId: session.user.id,
+      plan: session.user.plan,
+      org: session.user.org,
+    },
+  },
+})
+```
+
+The exporter lifts every `ai.telemetry.metadata.<key>` span attribute into the Voight event's `metadata.tags.<key>` — which is exactly the shape that drives the [per-user spend](/concepts/per-user-spend) sub-tab and the per-tag filter pills.
+
+The `userId` value is the only one Voight treats specially (it powers the **Users sub-tab**). Everything else is filter-only.
+
+## Options
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `agent` | `string` | `process.env.VOIGHT_AGENT` → `process.env.HOSTNAME` → `'unknown-agent'` | Stable agent identifier surfaced in the dashboard. |
+| `voightApiKey` | `string` | `process.env.VOIGHT_KEY` | API key for the Voight ingest endpoint. |
+| `apiBase` | `string` | `https://api.voight.xyz` | Override for self-hosted Voight deployments. |
+| `privacy` | `'minimal' \| 'standard' \| 'full'` | `'standard'` | See [Privacy](#privacy). |
+| `sessionId` | `string` | Auto UUID v4 per exporter instance | Stamps `metadata.sessionId` on every event the exporter emits. Use to scope a session yourself (per-user, per-conversation). |
+| `fetch` | `typeof fetch` | `globalThis.fetch` | Override for tests / custom transports. |
+| `onError` | `(err: unknown) => void` | no-op | Receives ingest network errors. Helpful during development. |
+
+## What's captured
+
+| Signal | Where it lands |
+|---|---|
+| Model id (with version suffix) | `model` |
+| Base provider (`openai`, `anthropic`, …) | `metadata.provider` |
+| Raw provider surface (e.g. `openai.responses`) | `metadata.providerSurface` |
+| Prompt messages | `input.messages` (post-privacy filter) |
+| Response text | `metadata.responseText` |
+| Token counts (input / output) | `metadata.tokens` |
+| Cache reads (`gen_ai.usage.cache_read_input_tokens` / `ai.usage.cachedInputTokens`) | `metadata.tokens.cache_read` |
+| Cache creation (Anthropic Path-A) | `metadata.tokens.cache_creation` |
+| Tool / function calls (normalised to `{id, name, arguments}`) | `metadata.toolCalls` + `toolExecuted` |
+| Streaming flag (derived from `ai.streamText.doStream` vs `ai.generateText.doGenerate`) | `metadata.streaming` |
+| API marker | `metadata.api: 'vercel-ai'` |
+| Source marker | `metadata.source: 'vercel-ai-sdk'` |
+| Trace grouping (auto UUID or explicit) | `metadata.sessionId` |
+| User-supplied telemetry metadata | `metadata.tags.*` |
+| Finish reason | `metadata.finishReason` |
+| Latency (ms) | `durationMs` |
+| Errors | `errorMessage` + `outcome: 'failed'` |
+
+## Privacy
+
+Three levels control how aggressively prompts, responses, and tool arguments are scrubbed before they leave the process. The PII catalogue is the same as `@voightxyz/openai` and `@voightxyz/anthropic`.
+
+| Level | Prompts & response text | Tool arguments | Tokens / model / cost / latency |
+|---|---|---|---|
+| `minimal` | dropped | dropped (names kept as tags) | always captured |
+| `standard` (default) | PII redacted (emails, phone, credit cards, JWTs, OpenAI / Anthropic / Stripe / GitHub / AWS / Slack keys) | PII redacted | always captured |
+| `full` | raw | raw | always captured |
+
+For most apps `'standard'` is the right balance — useful debugging signal without leaking secrets.
+
+## Pairing with another OTel exporter
+
+The exporter coexists with any other `SpanExporter` via OTel's `MultiSpanProcessor` — common when you already ship to Datadog / Honeycomb / Grafana Tempo and want to add Voight as a second sink.
+
+```ts
+import { registerOTel } from '@vercel/otel'
+import { VoightExporter } from '@voightxyz/vercel-ai'
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
+
+registerOTel({
+  serviceName: 'my-app',
+  traceExporter: [
+    new VoightExporter({ agent: 'production-chat-api' }),
+    new OTLPTraceExporter({ url: process.env.OTLP_ENDPOINT }),
+  ],
+})
+```
+
+Each exporter sees the same span batch independently — Voight only consumes spans that carry the GenAI semconv (`gen_ai.*`) or Vercel (`ai.*`) attributes, so non-LLM spans (HTTP, DB) are silently skipped from the Voight stream while still reaching your other exporter.
+
+## Out of scope (deferred)
+
+- **Direct middleware** (`voightMiddleware()`) for users who prefer a zero-OTel-setup wrap — planned for `0.2`.
+- **`withTrace` / `log` async-context helpers** — OTel context propagation already provides equivalent semantics. The helpers may return in `0.2` if real usage shows a gap.
+- **Batched / buffered ingest** — the per-event POST is sufficient for the workloads we expect at this scale. Batching arrives with real-world failure-mode data to design against.
+- **Bedrock / Vertex provider-specific paths** — the `gen_ai.*` normalisation is expected to cover them; will revisit if a user reports a missing attribute.
+
+## Source
+
+[github.com/Voightxyz/voight-vercel-ai](https://github.com/Voightxyz/voight-vercel-ai) — Apache 2.0.

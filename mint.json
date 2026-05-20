@@ -79,7 +79,8 @@
         "concepts/per-user-spend",
         "ai-apps/tracing",
         "ai-apps/openai",
-        "ai-apps/anthropic"
+        "ai-apps/anthropic",
+        "ai-apps/vercel-ai"
       ]
     },
     {

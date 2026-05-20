@@ -15,7 +15,7 @@ If you ship LLM features to end-users, Voight also answers the question nobody e
 | **AI Apps** | `voight.xyz/dashboard/ai-apps` | Production LLM-app observability — Overview / Traces / Models / Tools / Users | [AI Apps overview](/ai-apps/overview) |
 | **Explorer** | `voight.xyz/explore` | Public agent profiles, on-chain identity, reputation | [Agents](/concepts/agents) |
 | **Coding SDK** | `@voightxyz/sdk` on npm | Hook Claude Code or Cursor (Codex in active fix), or any TS/JS agent you build yourself | [Quickstart](/quickstart) |
-| **App SDKs** | `@voightxyz/openai` · `@voightxyz/anthropic` | Wrap your provider SDK in production apps — automatic LLM-call capture | [OpenAI](/ai-apps/openai) · [Anthropic](/ai-apps/anthropic) |
+| **App SDKs** | `@voightxyz/openai` · `@voightxyz/anthropic` · `@voightxyz/vercel-ai` | Capture LLM calls from production apps — direct provider wrappers or via the Vercel AI SDK | [OpenAI](/ai-apps/openai) · [Anthropic](/ai-apps/anthropic) · [Vercel AI](/ai-apps/vercel-ai) |
 | **HTTP API** | `POST /v1/events` | Language-agnostic event ingestion — Python, Go, Rust, anything | [API reference](/api-reference/events) |
 
 ## What Voight is for
@@ -23,7 +23,7 @@ If you ship LLM features to end-users, Voight also answers the question nobody e
 Three audiences, one product:
 
 - **You're building an AI coding agent or autonomous bot.** Wire the [coding SDK](/quickstart) into your IDE or import [library mode](/sdk/library-mode) — every prompt, tool call, error, and Solana tx lands in the dashboard with zero code changes.
-- **You're shipping an LLM-powered feature to end-users.** Wrap your OpenAI / Anthropic client with the [App SDKs](/ai-apps/openai). Every call gets captured with full token/cost breakdown. Add [`withTrace`](/ai-apps/tracing) at your request boundary to group calls per request and attribute cost per end-user.
+- **You're shipping an LLM-powered feature to end-users.** Wrap your OpenAI / Anthropic client with the [App SDKs](/ai-apps/openai), or register [`@voightxyz/vercel-ai`](/ai-apps/vercel-ai) once if you're on the [Vercel AI SDK](https://sdk.vercel.ai). Every call gets captured with full token/cost breakdown. Add [`withTrace`](/ai-apps/tracing) at your request boundary to group calls per request and attribute cost per end-user.
 - **You sell AI-powered tools to other developers.** The [per-user spend](/concepts/per-user-spend) pattern lets you answer "what does each of my customer's customers cost me?" without integrating an analytics SDK on the client side.
 
 ## Primitives

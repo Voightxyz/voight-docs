@@ -5,11 +5,41 @@ description: "What shipped, when."
 
 SDK releases follow [semver](https://semver.org/). Backend and dashboard ship continuously from `main` without version tags.
 
-Three SDKs ship from separate packages:
+Four SDKs ship from separate packages:
 
 - **`@voightxyz/sdk`** — coding-agent hooks + library mode (autonomous bots)
 - **`@voightxyz/openai`** — OpenAI Node SDK wrapper for production apps
 - **`@voightxyz/anthropic`** — Anthropic Node SDK wrapper for production apps
+- **`@voightxyz/vercel-ai`** — OpenTelemetry SpanExporter for the Vercel AI SDK
+
+## `@voightxyz/vercel-ai` changelog
+
+### 0.1.0 — 2026-05-21
+
+**First stable release.**
+
+`@voightxyz/vercel-ai` is an OpenTelemetry `SpanExporter` for the [Vercel AI SDK](https://sdk.vercel.ai). Register it next to `@vercel/otel`, flip `experimental_telemetry: { isEnabled: true }` on your `streamText` / `generateText` / `streamObject` / `generateObject` calls, and every call lands in your Voight dashboard.
+
+```ts
+import { registerOTel } from '@vercel/otel'
+import { VoightExporter } from '@voightxyz/vercel-ai'
+
+registerOTel({
+  serviceName: 'my-app',
+  traceExporter: new VoightExporter({ agent: 'production-chat-api' }),
+})
+```
+
+**What lands today:**
+
+- `streamText` / `generateText` / `streamObject` / `generateObject` capture (one event per LLM call — outer wrappers filtered out so token counts stay accurate)
+- OpenAI + Anthropic provider attribution (via `gen_ai.system` / `ai.model.provider`)
+- Tool calls (normalised to `{id, name, arguments}` JSON-string), token counts (input / output / cache_read / cache_creation), finish reason, streaming flag, sessionId
+- **Per-user attribution** via `experimental_telemetry.metadata` — passing `{ metadata: { userId, plan, ... } }` activates the dashboard Users sub-tab + per-tag filter pills automatically
+- Three privacy levels (`'minimal'` / `'standard'` / `'full'`) sharing the same 12-pattern PII catalogue as the other wrappers
+- Coexists with other observability tools via OTel's `MultiSpanProcessor`
+
+Validated end-to-end against the [`vercel/ai-chatbot`](https://github.com/vercel/ai-chatbot) reference app. Full setup at [ai-apps/vercel-ai](/ai-apps/vercel-ai).
 
 ## `@voightxyz/openai` changelog
 
