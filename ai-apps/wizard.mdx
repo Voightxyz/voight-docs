@@ -3,7 +3,7 @@ title: Wizard
 description: "npx @voightxyz/sdk init — scaffold Voight into a production app in 30 seconds."
 ---
 
-`init` is the wizard sub-command in `@voightxyz/sdk` for apps that already call OpenAI or Anthropic in production. It automates the install of the App SDKs ([`@voightxyz/openai`](/ai-apps/openai) and [`@voightxyz/anthropic`](/ai-apps/anthropic)) so you don't have to copy snippets from the docs.
+`init` is the wizard sub-command in `@voightxyz/sdk` for apps that already call an LLM in production. It detects which SDK family you use — direct provider wrappers ([`@voightxyz/openai`](/ai-apps/openai), [`@voightxyz/anthropic`](/ai-apps/anthropic)) or the [Vercel AI SDK](/ai-apps/vercel-ai) — and scaffolds the matching path so you don't have to copy snippets from the docs.
 
 Run it from the root of your app:
 
@@ -18,25 +18,30 @@ That's the entire setup.
 
 The flow is single-pass — no daemon, no background services, no follow-up commands:
 
-1. **Detects providers**. Reads `package.json` (both `dependencies` and `devDependencies`). If neither `openai` nor `@anthropic-ai/sdk` is found, the wizard aborts cleanly and explains what to install.
-2. **Detects package manager**. Looks for `pnpm-lock.yaml` → `yarn.lock` → `bun.lockb` → falls back to npm. The install command printed at the end matches what you actually use.
-3. **Detects framework**. Looks for `next` in deps. If present, the usage snippet at the end uses Next.js Route Handler shape (`export async function POST`); otherwise Express style (`app.post('/api/chat', ...)`).
-4. **Prompts for privacy level**. Three options:
+1. **Detects providers**. Reads `package.json` (both `dependencies` and `devDependencies`) for three keys: `openai`, `@anthropic-ai/sdk`, and `ai` (Vercel AI SDK). If none are found, the wizard aborts cleanly and explains what to install.
+2. **Picks the path**. If `ai` is present, the wizard takes the **Vercel AI SDK path** — it writes a root `instrumentation.ts` registering [`@voightxyz/vercel-ai`](/ai-apps/vercel-ai) with `@vercel/otel`. Otherwise it takes the **direct-wrapper path** — it writes `src/lib/voight.ts` with the wrapped OpenAI / Anthropic clients. Mixed projects (both `ai` and a direct provider) take the Vercel path with an explicit message, since the OTel exporter covers every underlying provider.
+3. **Detects package manager**. Looks for `pnpm-lock.yaml` → `yarn.lock` → `bun.lockb` → falls back to npm. The install command printed at the end matches what you actually use.
+4. **Detects framework**. Looks for `next` in deps. If present, the usage snippet at the end uses Next.js Route Handler shape (`export async function POST`); otherwise Express style (`app.post('/api/chat', ...)`).
+5. **Prompts for privacy level**. Three options:
    - **Minimal** — metadata only (tokens, latency, cost). No prompts or responses captured.
    - **Standard ★** — full content with [12-pattern PII scrubbing](/privacy/pii-patterns). Required for customer-facing apps where end-user PII flows through prompts.
    - **Full** — raw, no scrubbing. Debugging only.
-5. **Prompts for the Voight API key** (`vk_...`). Validates it against `api.voight.xyz` before writing anything — typo'd keys get caught here, not in production.
-6. **Prompts for an agent name**. Defaults to your `package.json` name; press enter to accept or type a custom one.
-7. **Writes `src/lib/voight.ts`** (or `lib/voight.ts` if your project doesn't have `src/`). Contains the wrapped clients for the providers it detected, plus a header comment explaining how to swap if your provider keys come from AWS Secrets Manager / Vault / Doppler instead of env.
-8. **Appends `VOIGHT_KEY` to `.env.local`**. Creates the file if absent. Existing `VOIGHT_KEY` lines are left alone.
-9. **Prints the install command + usage snippet**. The install command uses your package manager (e.g. `pnpm add @voightxyz/openai @voightxyz/anthropic` if pnpm-lock detected).
+6. **Prompts for the Voight API key** (`vk_...`). Validates it against `api.voight.xyz` before writing anything — typo'd keys get caught here, not in production.
+7. **Prompts for an agent name**. Defaults to your `package.json` name; press enter to accept or type a custom one.
+8. **Writes the target module**:
+   - **Direct-wrapper path** → `src/lib/voight.ts` (or `lib/voight.ts` if your project doesn't have `src/`). Contains the wrapped clients for the providers detected, plus a header comment explaining how to swap if your provider keys come from AWS Secrets Manager / Vault / Doppler instead of env.
+   - **Vercel AI SDK path** → `instrumentation.ts` at the project root (or `src/instrumentation.ts` if your project uses `src/`). Registers `@vercel/otel` with `VoightExporter` as the trace exporter and includes a header comment explaining how to activate per-user attribution via `experimental_telemetry.metadata`.
+9. **Appends `VOIGHT_KEY` to `.env.local`**. Creates the file if absent. Existing `VOIGHT_KEY` lines are left alone.
+10. **Prints the install command + usage snippet**. The install command uses your package manager and is tailored to the path:
+    - Direct wrappers → `pnpm add @voightxyz/openai @voightxyz/anthropic`
+    - Vercel AI SDK → `pnpm add @voightxyz/vercel-ai @vercel/otel`
 
 ## What it does NOT do
 
 - ❌ **Never touches `~/.claude`, `~/.cursor`, `~/.codex`** or any other path outside your project's `cwd`. This is the key difference from `setup` (which wires IDE hooks globally).
 - ❌ **Never asks for or stores your provider keys** (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`). Those belong to your app and stay there. The Voight wrapper instruments the requests but never reads the auth header.
 - ❌ **Never runs `npm install` for you**. We print the command so you can run it in your terminal — that way you stay in control of your lockfile (and we don't accidentally pin a version you didn't approve).
-- ❌ **Never overrides an existing `src/lib/voight.ts`**. If the file already exists, the wizard aborts and asks you to move it aside.
+- ❌ **Never overrides an existing `src/lib/voight.ts` or `instrumentation.ts`**. If the target file already exists, the wizard aborts and asks you to move it aside (relevant if you already wire OpenTelemetry yourself — see the [MultiSpanProcessor pairing](/ai-apps/vercel-ai#pairing-with-another-otel-exporter) docs).
 
 ## Example session
 
@@ -101,7 +106,58 @@ $ npx -y @voightxyz/sdk init
   Then open https://voight.xyz/dashboard/ai-apps
 ```
 
+## Example session — Vercel AI SDK path
+
+When the wizard detects `ai` in `package.json`, it takes the Vercel path. The prompts are identical (privacy + key + agent name); only the written file and the install command differ:
+
+```
+$ cd ~/projects/ai-chatbot
+$ npx -y @voightxyz/sdk init
+
+  Voight · init → /Users/jane/projects/ai-chatbot
+
+  ✓ Detected providers: ai (^6.0.0) + openai (^4.79.2)
+    (using the Vercel AI SDK path — covers both)
+  ✓ Detected package manager: pnpm
+  ✓ Detected framework: Next.js
+
+  ✓ Privacy: standard
+  ✓ Key valid
+  ✓ Agent: production-chat-api
+
+  ✓ Wrote instrumentation.ts
+  ✓ Created .env.local with VOIGHT_KEY
+
+  Activate telemetry on your existing calls:
+
+    // app/api/chat/route.ts
+    import { openai } from '@ai-sdk/openai'
+    import { streamText } from 'ai'
+
+    export async function POST(req: Request) {
+      const result = streamText({
+        model: openai('gpt-4o-mini'),
+        prompt: (await req.json()).prompt,
+        experimental_telemetry: {
+          isEnabled: true,
+          metadata: { userId: 'user_123', plan: 'pro' },
+        },
+      })
+      return result.toAIStreamResponse()
+    }
+
+  Per-user attribution: anything you put in `metadata` shows up
+  under `metadata.tags.*` in Voight — `userId` powers the Users sub-tab.
+
+  One more step — install the Voight exporter:
+    pnpm add @voightxyz/vercel-ai @vercel/otel
+
+  Then open https://voight.xyz/dashboard/ai-apps
+```
+
 ## Generated file
+
+### Direct-wrapper path
 
 `src/lib/voight.ts` after a dual-provider install with `agent: 'production-chat-api'`, `privacy: 'standard'`:
 
@@ -147,6 +203,47 @@ export { withTrace, log } from '@voightxyz/openai'
 ```
 
 If only one provider is detected, only that provider's block is emitted. Single import path either way: `import { openai, anthropic, withTrace, log } from '@/lib/voight'`.
+
+### Vercel AI SDK path
+
+`instrumentation.ts` after a Vercel install with `agent: 'production-chat-api'`, `privacy: 'standard'`:
+
+```ts
+// ──────────────────────────────────────────────────────────────────
+// Voight observability — generated by `npx @voightxyz/sdk init`
+//
+// Registers the Voight OpenTelemetry exporter for every Vercel
+// AI SDK call (streamText / generateText / streamObject /
+// generateObject). To opt a call into observability, flip
+// `experimental_telemetry: { isEnabled: true }` on it.
+//
+// For per-user attribution, pass a metadata bag:
+//
+//   experimental_telemetry: {
+//     isEnabled: true,
+//     metadata: { userId: session.user.id, plan: session.user.plan },
+//   }
+//
+// The Voight exporter lifts `ai.telemetry.metadata.*` attributes
+// onto `metadata.tags.*` so the dashboard Users sub-tab + per-tag
+// filter pills populate automatically.
+// ──────────────────────────────────────────────────────────────────
+
+import { registerOTel } from '@vercel/otel'
+import { VoightExporter } from '@voightxyz/vercel-ai'
+
+export function register() {
+  registerOTel({
+    serviceName: 'production-chat-api',
+    traceExporter: new VoightExporter({
+      agent: 'production-chat-api',
+      privacy: 'standard',
+    }),
+  })
+}
+```
+
+The file lives at `instrumentation.ts` in the project root (Next.js convention) — or `src/instrumentation.ts` if your project already uses `src/`. See the [@voightxyz/vercel-ai docs](/ai-apps/vercel-ai) for the full capture matrix.
 
 ## Non-interactive flags
 

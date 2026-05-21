@@ -7,6 +7,19 @@ description: "OpenTelemetry SpanExporter for the Vercel AI SDK — capture every
 
 Same backend and dashboard as [`@voightxyz/openai`](/ai-apps/openai) + [`@voightxyz/anthropic`](/ai-apps/anthropic). Events from all three packages land side-by-side under the same agent.
 
+## Quick setup with the wizard
+
+If your app already imports `ai`, the lowest-friction install is the wizard from the main SDK:
+
+```bash
+cd your-app
+npx -y @voightxyz/sdk init
+```
+
+It detects `ai` in your `package.json`, prompts for a privacy level + Voight key + agent name, validates the key, and writes a ready-to-load `instrumentation.ts` that registers `VoightExporter` with `@vercel/otel`. 30 seconds, zero copy-paste. Full walkthrough at [docs.voight.xyz/ai-apps/wizard](/ai-apps/wizard).
+
+Continue below if you'd rather wire it manually.
+
 ## Why an OTel SpanExporter
 
 The Vercel AI SDK emits OpenTelemetry spans natively when `experimental_telemetry` is enabled — the same wire format every other LLM-observability tool listed in the [Vercel AI SDK docs](https://sdk.vercel.ai/providers/observability) consumes (Langfuse, Helicone, Phoenix, Braintrust, Datadog, Sentry, Weights & Biases). We follow the same contract so you can:

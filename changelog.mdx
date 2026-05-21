@@ -128,6 +128,18 @@ Three privacy levels (Minimal / Standard / Full) with local PII scrubbing on Sta
 
 ## `@voightxyz/sdk` changelog
 
+### 0.6.5 — 2026-05-21
+
+**`init` wizard now detects the Vercel AI SDK.**
+
+If your `package.json` lists `ai` (Vercel AI SDK), the wizard takes a new third path: instead of writing `src/lib/voight.ts` with wrapped clients, it writes an `instrumentation.ts` that registers [`@voightxyz/vercel-ai`](/ai-apps/vercel-ai) with `@vercel/otel`. The Vercel AI SDK emits OpenTelemetry spans natively, so every `streamText` / `generateText` / `streamObject` / `generateObject` call carrying `experimental_telemetry: { isEnabled: true }` lands in your Voight dashboard with the same shape as direct-wrapper events.
+
+Mixed projects (both `ai` and a direct provider in deps) take the Vercel path with an explicit message — the OTel exporter covers every underlying provider via `gen_ai.*` semconv normalisation.
+
+Strictly additive: zero edits to the `setup` flow (Claude Code / Cursor / Codex hooks) or to the direct-wrapper path. A project that has only `openai` or `@anthropic-ai/sdk` (no `ai`) gets exactly the same files the 0.6.4 wizard produced — verified byte-for-byte via the registry-level smoke test before `@latest` promotion.
+
+Same install command (`npx -y @voightxyz/sdk init`), same prompts (privacy + key + agent), framework-aware usage snippet, pm-tailored install command (`pnpm add @voightxyz/vercel-ai @vercel/otel` for the Vercel path).
+
 ### 0.6.4 — 2026-05-17
 
 **New `init` sub-command — scaffold Voight into a production app with one wizard.**
