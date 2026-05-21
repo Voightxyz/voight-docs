@@ -80,7 +80,8 @@
         "ai-apps/tracing",
         "ai-apps/openai",
         "ai-apps/anthropic",
-        "ai-apps/vercel-ai"
+        "ai-apps/vercel-ai",
+        "ai-apps/glm"
       ]
     },
     {

@@ -5,6 +5,8 @@ description: "Import @voightxyz/sdk in TypeScript/JavaScript agents you build yo
 
 For agents you build yourself in TypeScript or JavaScript — autonomous bots, trading agents, ElizaOS characters, Solana Agent Kit flows — import the SDK and call `voight.log()` directly.
 
+Library mode is provider-agnostic — wrap any LLM call (OpenAI / Anthropic / [GLM](/ai-apps/glm) / Mistral / your-own-proxy) and emit the event yourself. The backend `MODEL_PRICING` table ships entries for the major providers, so cost / token attribution lights up automatically as long as you set `model` on the event.
+
 ## Install
 
 ```bash

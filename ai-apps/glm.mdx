@@ -1,0 +1,172 @@
+---
+title: GLM (Z.ai)
+description: "Observability for GLM models from Z.ai (formerly Zhipu AI) — three setup paths, full pricing coverage."
+---
+
+[Z.ai](https://z.ai) (rebranded from Zhipu AI in 2025) publishes the GLM model family — GLM-5, GLM-4.7, GLM-4.5, plus vision variants and OCR. Voight ships pricing entries for every model in the [official Z.ai catalogue](https://docs.z.ai/guides/overview/pricing), so events from GLM calls land in your dashboard with the same cost / token / latency capture as any other provider.
+
+The Z.ai API at `https://api.z.ai/api/paas/v4` is [officially OpenAI-compatible](https://docs.z.ai), which means the same Voight SDK family that wraps OpenAI / Anthropic also covers GLM — no separate package needed.
+
+## Three setup paths
+
+Pick the one that matches how your app calls GLM:
+
+| Your stack | Path |
+|---|---|
+| Express / vanilla Node calling Z.ai via the OpenAI SDK | [Direct wrapper](#direct-wrapper-voightxyzopenai) |
+| Next.js / any app using the Vercel AI SDK + `zhipu-ai-provider` | [Vercel AI SDK exporter](#vercel-ai-sdk-voightxyzvercel-ai) |
+| Autonomous bot / library code emitting events directly | [Library mode](#library-mode-voightxyzsdk) |
+
+## Direct wrapper (`@voightxyz/openai`)
+
+Because Z.ai is OpenAI-compatible, [`@voightxyz/openai`](/ai-apps/openai) works zero-code — just point the OpenAI client at Z.ai's base URL:
+
+```ts
+import OpenAI from 'openai'
+import { wrapOpenAI } from '@voightxyz/openai'
+
+const glm = wrapOpenAI(
+  new OpenAI({
+    baseURL: 'https://api.z.ai/api/paas/v4',
+    apiKey: process.env.ZHIPU_API_KEY,
+  }),
+  {
+    voightApiKey: process.env.VOIGHT_KEY,
+    agent: 'production-chat-api',
+    privacy: 'standard',
+  },
+)
+
+const result = await glm.chat.completions.create({
+  model: 'glm-4.5',
+  messages: [{ role: 'user', content: 'Hello' }],
+})
+```
+
+Every call captures prompts, tokens, response text, tool calls, finish reason, and latency. The cost is computed from the Voight backend's `MODEL_PRICING` table using the GLM rates listed below.
+
+## Vercel AI SDK (`@voightxyz/vercel-ai`)
+
+If your app uses the Vercel AI SDK with the community [`zhipu-ai-provider`](https://github.com/Xiang-CH/zhipu-ai-provider), [`@voightxyz/vercel-ai`](/ai-apps/vercel-ai) captures every `streamText` / `generateText` / `streamObject` / `generateObject` call automatically via OpenTelemetry — same as for OpenAI or Anthropic targets.
+
+```ts filename="instrumentation.ts"
+import { registerOTel } from '@vercel/otel'
+import { VoightExporter } from '@voightxyz/vercel-ai'
+
+export function register() {
+  registerOTel({
+    serviceName: 'my-app',
+    traceExporter: new VoightExporter({
+      agent: 'production-chat-api',
+      privacy: 'standard',
+    }),
+  })
+}
+```
+
+```ts filename="app/api/chat/route.ts"
+import { streamText } from 'ai'
+import { zhipu } from 'zhipu-ai-provider'
+
+export async function POST(req: Request) {
+  const result = streamText({
+    model: zhipu('glm-4.7'),
+    prompt: (await req.json()).prompt,
+    experimental_telemetry: {
+      isEnabled: true,
+      metadata: { userId: 'user_123', plan: 'pro' },
+    },
+  })
+  return result.toAIStreamResponse()
+}
+```
+
+The `metadata.userId` lifts onto `metadata.tags.userId` in Voight and powers the dashboard's [per-user spend](/concepts/per-user-spend) sub-tab.
+
+## Library mode (`@voightxyz/sdk`)
+
+For autonomous agents or library callers that don't use either of the above SDKs, the library-mode client is provider-agnostic — call GLM however you like and emit a Voight event manually:
+
+```ts
+import { Voight } from '@voightxyz/sdk'
+
+const voight = new Voight({
+  apiKey: process.env.VOIGHT_KEY,
+  agentId: 'my-glm-bot',
+})
+
+const t0 = Date.now()
+const res = await fetch('https://api.z.ai/api/paas/v4/chat/completions', {
+  method: 'POST',
+  headers: {
+    'authorization': `Bearer ${process.env.ZHIPU_API_KEY}`,
+    'content-type': 'application/json',
+  },
+  body: JSON.stringify({
+    model: 'glm-4.5',
+    messages: [{ role: 'user', content: 'Hello' }],
+  }),
+})
+const data = await res.json()
+
+voight.log({
+  type: 'reasoning',
+  model: 'glm-4.5',
+  durationMs: Date.now() - t0,
+  outcome: 'success',
+  metadata: {
+    source: 'custom',
+    provider: 'zhipu',
+    tokens: {
+      input: data.usage.prompt_tokens,
+      output: data.usage.completion_tokens,
+    },
+    responseText: data.choices[0].message.content,
+  },
+})
+```
+
+The cost matcher resolves `glm-4.5` to the table entry below; the family tag `zhipu` keeps the event grouped with other GLM traffic in the dashboard.
+
+## Pricing coverage
+
+Verified against the official Z.ai pricing page (USD per 1M tokens).
+
+### Text models
+
+| Model | Input | Output |
+|---|---|---|
+| GLM-5.1 | $1.40 | $4.40 |
+| GLM-5 | $1.00 | $3.20 |
+| GLM-5-Turbo | $1.20 | $4.00 |
+| GLM-4.7 | $0.60 | $2.20 |
+| GLM-4.7-FlashX | $0.07 | $0.40 |
+| GLM-4.7-Flash | Free | Free |
+| GLM-4.6 | $0.60 | $2.20 |
+| GLM-4.5 | $0.60 | $2.20 |
+| GLM-4.5-X | $2.20 | $8.90 |
+| GLM-4.5-Air | $0.20 | $1.10 |
+| GLM-4.5-AirX | $1.10 | $4.50 |
+| GLM-4.5-Flash | Free | Free |
+| GLM-4-32B-0414-128K | $0.10 | $0.10 |
+
+### Vision models
+
+| Model | Input | Output |
+|---|---|---|
+| GLM-5V-Turbo | $1.20 | $4.00 |
+| GLM-4.5V | $0.60 | $1.80 |
+| GLM-4.6V | $0.30 | $0.90 |
+| GLM-4.6V-FlashX | $0.04 | $0.40 |
+| GLM-4.6V-Flash | Free | Free |
+| GLM-OCR | $0.03 | $0.03 |
+
+Longest-prefix lookup handles overlapping family names — e.g. an event tagged `model: 'glm-4.5-airx-20251130'` matches `glm-4.5-airx` (not `glm-4.5-air` or `glm-4.5`) and bills at the correct rate.
+
+## Resources
+
+- [Z.ai pricing](https://docs.z.ai/guides/overview/pricing) — source of truth for the table above
+- [Z.ai API reference](https://docs.z.ai)
+- [`zhipu-ai-provider`](https://github.com/Xiang-CH/zhipu-ai-provider) — community Vercel AI SDK provider
+- [@voightxyz/openai](https://www.npmjs.com/package/@voightxyz/openai) on npm
+- [@voightxyz/vercel-ai](https://www.npmjs.com/package/@voightxyz/vercel-ai) on npm
