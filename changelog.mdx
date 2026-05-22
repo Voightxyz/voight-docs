@@ -5,6 +5,31 @@ description: "What shipped, when."
 
 SDK releases follow [semver](https://semver.org/). Backend and dashboard ship continuously from `main` without version tags.
 
+## Week of 2026-05-18 — Vercel AI SDK support, install wizard, GLM provider
+
+A short recap of what shipped this week. Per-package version notes live in the sections below.
+
+### New
+
+- **`@voightxyz/vercel-ai` 0.1.0** — first stable release of the [Vercel AI SDK exporter](/ai-apps/vercel-ai). Register one OpenTelemetry exporter next to `@vercel/otel` and every `streamText` / `generateText` / `streamObject` / `generateObject` call lands in your dashboard with accurate token counts, tool calls, and per-user attribution. Validated against the `vercel/ai-chatbot` reference app.
+- **`@voightxyz/sdk init` now detects the Vercel AI SDK** — running `npx -y @voightxyz/sdk init` in a project that uses `ai` writes an `instrumentation.ts` that wires up the exporter automatically. Direct-wrapper projects (OpenAI / Anthropic only) get the same files as before. See the [install wizard guide](/ai-apps/wizard).
+- **GLM (Z.ai / Zhipu) provider page** — new [GLM provider doc](/ai-apps/glm) walks through using GLM models behind the OpenAI wrapper, with pricing and routing notes.
+
+### Updates
+
+- **One-line per-user attribution** — both `@voightxyz/openai` and `@voightxyz/anthropic` now accept a `tags` map on `withTrace`. Pass `{ userId, plan, ... }` once at the request boundary and every LLM call inside the block is stamped automatically. Lights up the dashboard's [Users sub-tab](/ai-apps/overview#users-sub-tab) and [per-user spend](/concepts/per-user-spend) view.
+- **Request-boundary trace grouping** — `withTrace(fn, { routeTag })` and `log(message, extra?)` are now exported from both App SDKs. Group every LLM call from one request under a single trace card, interleaved with your own log lines. Mixing OpenAI and Anthropic calls in the same trace works without extra setup.
+- **`@voightxyz/anthropic` peer range loosened to `>=0.27.0`** — projects pinning older Anthropic SDK releases no longer hit `ERESOLVE` on install. Runtime verified against `0.29.2` and `0.96.0`.
+
+### Fixes
+
+- **Vercel AI exporter token accuracy** — outer wrapper spans are filtered out so token counts match the underlying provider's billing, and `durationMs` is rounded to an integer.
+
+<Note>
+  Already on the OpenAI or Anthropic wrapper? Adding per-user attribution is a one-line change — see the [per-user spend guide](/concepts/per-user-spend).
+</Note>
+
+
 Four SDKs ship from separate packages:
 
 - **`@voightxyz/sdk`** — coding-agent hooks + library mode (autonomous bots)
