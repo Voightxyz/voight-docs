@@ -178,6 +178,14 @@ registerOTel({
 
 Each exporter sees the same span batch independently — Voight only consumes spans that carry the GenAI semconv (`gen_ai.*`) or Vercel (`ai.*`) attributes, so non-LLM spans (HTTP, DB) are silently skipped from the Voight stream while still reaching your other exporter.
 
+## Pairing with Voight direct wrappers
+
+If your app also uses [`@voightxyz/openai`](/ai-apps/openai) or [`@voightxyz/anthropic`](/ai-apps/anthropic) with `otel: true`, both packages emit OpenTelemetry spans for every LLM call. Since `VoightExporter` is registered as an OTel exporter, those wrapper-emitted spans would normally hit the Voight backend twice — once via the wrapper's direct POST, once via this exporter.
+
+Starting in `0.1.1`, the exporter recognises the `voight.source: 'wrapper'` attribute the wrappers stamp on those spans and skips them cleanly — no POST, callback still SUCCESS. Other OTel exporters in the same process (Langfuse, Datadog, Sentry) still see the spans and forward them normally. The dedup is scoped to the Voight-to-Voight loop.
+
+Spans without that marker — the canonical `streamText` / `generateText` / `streamObject` / `generateObject` spans the Vercel AI SDK emits — are unaffected.
+
 ## Out of scope (deferred)
 
 - **Direct middleware** (`voightMiddleware()`) for users who prefer a zero-OTel-setup wrap — planned for `0.2`.

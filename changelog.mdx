@@ -39,6 +39,14 @@ Four SDKs ship from separate packages:
 
 ## `@voightxyz/vercel-ai` changelog
 
+### 0.1.1 — 2026-05-22
+
+**Dedup filter for wrapper-emitted spans.**
+
+When [`@voightxyz/openai`](https://www.npmjs.com/package/@voightxyz/openai) or [`@voightxyz/anthropic`](https://www.npmjs.com/package/@voightxyz/anthropic) is wrapped with `otel: true`, every captured call would otherwise land twice in the Voight backend — once via the wrapper's direct POST, once via this exporter. 0.1.1 teaches `VoightExporter.export()` to recognise the `voight.source: 'wrapper'` attribute the wrappers stamp on those spans, and skip them cleanly. Other OTel exporters in the same process (Langfuse, Datadog, Sentry) still see the spans — the dedup is scoped to the Voight-to-Voight loop.
+
+Spans without that marker (the canonical `streamText` / `generateText` / `streamObject` / `generateObject` spans the Vercel AI SDK emits) are unaffected.
+
 ### 0.1.0 — 2026-05-21
 
 **First stable release.**
@@ -67,6 +75,20 @@ registerOTel({
 Validated end-to-end against the [`vercel/ai-chatbot`](https://github.com/vercel/ai-chatbot) reference app. Full setup at [ai-apps/vercel-ai](/ai-apps/vercel-ai).
 
 ## `@voightxyz/openai` changelog
+
+### 0.1.7 — 2026-05-22
+
+**`{ otel: true }` opt-in — OpenTelemetry side-channel.**
+
+When set, every captured call is *also* emitted as an OpenTelemetry span with `gen_ai.*` semantic-convention attributes (plus the parallel `ai.*` namespace for Vercel cross-compatibility). The wrapper picks up whichever `TracerProvider` is registered in the host process, so you can wire it inside an OTel-mandated stack (Langfuse, Phoenix, Datadog, Sentry, [`@voightxyz/vercel-ai`](/ai-apps/vercel-ai)) without losing the direct ingestion to `api.voight.xyz`.
+
+```ts
+const client = wrapOpenAI(new OpenAI(), { agent: 'my-app', otel: true })
+```
+
+Span name: `voight.openai.chat` (or `voight.openai.responses`). Each span carries `voight.source: 'wrapper'` so `@voightxyz/vercel-ai` ≥ 0.1.1 deduplicates them automatically.
+
+`@opentelemetry/api` is now an **optional** peer dependency. Default `otel: false` ships byte-identical behaviour to 0.1.6 — no extra install, no runtime cost.
 
 ### 0.1.6 — 2026-05-17
 
@@ -109,6 +131,14 @@ OpenAI Node SDK wrapper. Captures:
 Three privacy levels (Minimal / Standard / Full) with local PII scrubbing on Standard.
 
 ## `@voightxyz/anthropic` changelog
+
+### 0.1.8 — 2026-05-22
+
+**`{ otel: true }` opt-in — OpenTelemetry side-channel.**
+
+Mirror of [`@voightxyz/openai@0.1.7`](#017--2026-05-22) — same flag, same `gen_ai.*` + `ai.*` attribute shape, same `voight.source: 'wrapper'` dedup marker, same optional peer on `@opentelemetry/api`. Span name: `voight.anthropic.messages`. `gen_ai.system` resolves to `'anthropic'`.
+
+Default `otel: false` ships byte-identical behaviour to 0.1.7.
 
 ### 0.1.7 — 2026-05-17
 
