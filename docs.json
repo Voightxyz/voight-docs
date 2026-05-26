@@ -11,6 +11,24 @@
   "navigation": {
     "anchors": [
       {
+        "anchor": "Trust & Security",
+        "icon": "shield-check",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "trust/overview"
+            ]
+          },
+          {
+            "group": "Compliance frameworks",
+            "pages": [
+              "trust/gdpr"
+            ]
+          }
+        ]
+      },
+      {
         "anchor": "Documentation",
         "icon": "book-open",
         "groups": [
