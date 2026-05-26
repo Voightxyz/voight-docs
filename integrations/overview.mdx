@@ -1,0 +1,20 @@
+---
+title: Integrations
+description: "Tools and platforms that ship Voight as their observability layer for AI agents."
+---
+
+Voight is the observability layer behind production AI products. This section catalogues the platforms that integrate Voight as their dashboard for agent runs, tool calls, costs, and approvals — so their users get a turnkey window into what their agents are doing without writing instrumentation code themselves.
+
+If you're building a product on top of LLMs or autonomous agents and want to ship observability without rolling your own, the [HTTP API](/sdk/http-api) is the path most integration partners use — same shape, same scrubbing, same dashboard, none of the SDK plumbing.
+
+## Current integrations
+
+| Partner | Surface | Page |
+|---|---|---|
+| **DAEMON** | Electron agent IDE on Solana | [DAEMON](/integrations/daemon) |
+
+## Become an integration partner
+
+Voight ships first-party SDKs for OpenAI, Anthropic, the Vercel AI SDK, and the Claude Code / Cursor / Codex hook surfaces. If your platform doesn't fit those patterns, the [raw HTTP path](/sdk/http-api) lets you POST events directly to `https://api.voight.xyz/v1/events` from any runtime — Node, Python, Rust, Go, Electron main process, Tauri sidecar, anything that can speak JSON over HTTPS.
+
+Reach out at [x.com/voightxyz](https://x.com/voightxyz) — we list every shipped integration here and link back to your docs.

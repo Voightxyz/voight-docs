@@ -45,6 +45,13 @@
             ]
           },
           {
+            "group": "Integrations",
+            "pages": [
+              "integrations/overview",
+              "integrations/daemon"
+            ]
+          },
+          {
             "group": "Install paths",
             "pages": [
               "sdk/library-mode",
