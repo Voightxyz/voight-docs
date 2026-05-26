@@ -1,20 +1,20 @@
 ---
 title: Integrations
-description: "Tools and platforms that ship Voight as their observability layer for AI agents."
+description: "Products that ship Voight as their built-in observability stream for AI agents — no code required by their end users."
 ---
 
-Voight is the observability layer behind production AI products. This section catalogues the platforms that integrate Voight as their dashboard for agent runs, tool calls, costs, and approvals — so their users get a turnkey window into what their agents are doing without writing instrumentation code themselves.
+This section catalogues the products that integrate Voight directly into their workflow, so their users get observability for agent runs, tool calls, decisions, and transactions without writing any instrumentation code themselves.
 
-If you're building a product on top of LLMs or autonomous agents and want to ship observability without rolling your own, the [HTTP API](/sdk/http-api) is the path most integration partners use — same shape, same scrubbing, same dashboard, none of the SDK plumbing.
+If you're building an agent platform, IDE, runtime, or anything else that runs LLM-driven code and want to ship observability without rolling your own pipeline, the [HTTP API](/sdk/http-api) is the surface most integrations use — POST events to `https://api.voight.xyz/v1/events` from any runtime that speaks JSON over HTTPS (Node, Python, Rust, Go, Electron main process, Tauri sidecar, Deno).
 
 ## Current integrations
 
-| Partner | Surface | Page |
+| Product | What it is | Page |
 |---|---|---|
-| **DAEMON** | Electron agent IDE on Solana | [DAEMON](/integrations/daemon) |
+| **DAEMON** | AI-native Solana IDE — Electron, MIT, mac/Win/Linux | [DAEMON](/integrations/daemon) |
 
-## Become an integration partner
+## Adding your integration
 
-Voight ships first-party SDKs for OpenAI, Anthropic, the Vercel AI SDK, and the Claude Code / Cursor / Codex hook surfaces. If your platform doesn't fit those patterns, the [raw HTTP path](/sdk/http-api) lets you POST events directly to `https://api.voight.xyz/v1/events` from any runtime — Node, Python, Rust, Go, Electron main process, Tauri sidecar, anything that can speak JSON over HTTPS.
+Voight ships first-party SDKs for OpenAI, Anthropic, the Vercel AI SDK, plus hooks for Claude Code / Cursor / Codex. If your product doesn't fit those surfaces — for example, you're building a desktop IDE, an agent runtime, or a no-code platform — the [HTTP path](/sdk/http-api) is the cleanest fit. The event shape, privacy levels, retry contract, and dashboard rendering are identical to what the SDKs use internally.
 
-Reach out at [x.com/voightxyz](https://x.com/voightxyz) — we list every shipped integration here and link back to your docs.
+To get listed here, reach out at [x.com/voightxyz](https://x.com/voightxyz) with a link to your integration docs. We mirror your page here and cross-link both ways.

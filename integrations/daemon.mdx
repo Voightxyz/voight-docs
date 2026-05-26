@@ -1,75 +1,89 @@
 ---
 title: DAEMON
-description: "DAEMON — the Electron agent IDE on Solana — ships Voight as its observability layer for every agent run, tool call, approval, and on-chain transaction."
-"og:title": "DAEMON × Voight — Observability for agent runs"
-"og:description": "DAEMON streams reasoning, tool calls, decisions, transactions, and errors to Voight, so every run can be reviewed during or after execution."
+description: "DAEMON — the AI-native Solana IDE — ships Voight as its observability stream for agent runs, tool calls, approval decisions, terminal activity, and Solana transactions."
+"og:title": "DAEMON × Voight — Observability for Solana agent runs"
+"og:description": "DAEMON streams reasoning, actions, tool calls, approvals, transactions, and errors to Voight from the Electron main process."
 "twitter:card": "summary_large_image"
-"twitter:title": "DAEMON × Voight — Observability for agent runs"
-"twitter:description": "DAEMON streams reasoning, tool calls, decisions, transactions, and errors to Voight, so every run can be reviewed during or after execution."
+"twitter:title": "DAEMON × Voight — Observability for Solana agent runs"
+"twitter:description": "Every agent run, tool call, approval, and Solana tx — captured from the Electron main process and rendered in your Voight dashboard."
 ---
 
-[**DAEMON**](https://www.daemonide.tech) is an Electron-based agent IDE for Solana that lets developers build, run, and approve autonomous agents from a desktop terminal. Every DAEMON workspace ships with Voight as its observability layer — out of the box, no separate setup beyond pasting an API key.
+[**DAEMON**](https://www.daemonide.tech) is the AI-native Solana development environment — an Electron-based desktop IDE that consolidates editor, terminal, wallet, deploy pipeline, and AI agents into one workspace. Open source under MIT, available for macOS, Windows, and Linux.
 
-DAEMON's own integration guide lives at [daemonide.tech/docs/voight-observability](https://www.daemonide.tech/docs/voight-observability).
+DAEMON integrates Voight as its **observability stream** for AI agent runs, tool calls, approval decisions, terminal activity, Solana transactions, errors, and per-session traces. Their integration guide lives at [daemonide.tech/docs/voight-observability](https://www.daemonide.tech/docs/voight-observability).
 
-## How DAEMON uses Voight
+## What DAEMON emits to Voight
 
-DAEMON emits **reasoning, action, tool, decision, transaction, and error** events to Voight so a run can be reviewed both during and after execution. Inside Voight's dashboard, DAEMON activity surfaces alongside any other agent source you've connected — same timeline, same filters, same cost math.
+DAEMON maps its native activity to Voight's [event taxonomy](/concepts/events). Every action the IDE performs — whether the Claude agent reasoning over a patch, the integrated terminal running `solana program deploy`, or the user approving a Phantom signature — lands as a typed event you can filter and trace.
 
-| What DAEMON streams | Where it lands |
+| Event type | DAEMON activity captured |
 |---|---|
-| Agent runs, tool calls, approval decisions | Live timeline, grouped by session / agent / model / outcome |
-| Solana transactions | Trace detail with on-chain context |
-| Errors + denials | `/dashboard/errors` clusters with resolution |
-| Cost per model / per session | `/dashboard/ai-apps` Cost over time + Models tab |
+| `reasoning` | Claude / Codex chat turns, agent analysis — with `model` and duration |
+| `action` | Agent lifecycle, file patches, terminal commands, filesystem operations |
+| `tool` | Tool execution (Shipline steps, MCP tool calls) with outcome + timing |
+| `decision` | Approval workflows — policy metadata captured |
+| `tx` | Solana transactions — amount, token, status, signature |
+| `error` | Runtime failures with source context |
+
+Each event carries a `sessionId` in `metadata` so a single DAEMON workspace run groups cleanly in `/dashboard/traces`.
 
 ## Architecture
 
-DAEMON uses Voight's [raw HTTP path](/sdk/http-api) — `POST https://api.voight.xyz/v1/events` — directly from the **Electron main process**. This keeps the Voight API key inside DAEMON's secure key store and prevents any exposure to renderer code or the agent runtime itself.
+DAEMON uses Voight's [raw HTTP path](/sdk/http-api) — `POST https://api.voight.xyz/v1/events` — directly from the **Electron main process**. The `VOIGHT_KEY` lives in DAEMON's secure storage and is **never exposed to renderer code** or to the agent runtime. Renderer-side JavaScript and any running agent see only the IPC events DAEMON exposes; the key and the ingestion endpoint stay in main.
 
-The full event schema (`agentId`, `timestamp`, `type`, `toolExecuted`, `outcome`, `durationMs`, plus DAEMON-specific detail nested under `metadata.sessionId` etc.) is documented in the [Events reference](/api-reference/events).
-
-## Privacy — three levels, scrubbed locally
-
-DAEMON respects Voight's [three-level privacy model](/privacy/overview): events are scrubbed locally in the main process **before transmission**, so sensitive content never leaves the machine in the clear.
-
-| Level | Behaviour | When to use |
-|---|---|---|
-| **Minimal** | Metadata only — tool names, timing, outcomes, tokens, USD. No prompts or responses. | High-sensitivity workspaces, shared screens |
-| **Standard** (default) | Full content with PII / API key / wallet patterns scrubbed via [12 named patterns + Luhn-validated cards](/privacy/pii-patterns) | Most production agents |
-| **Full** | Everything as-is | Internal debugging only |
-
-PII patterns covered include API keys (`sk-*`, `vk_*`, AWS, GitHub, Slack), JWTs, PEM blocks, emails, phones, credit cards. Full list in the [PII patterns reference](/privacy/pii-patterns).
+This is the cleanest pattern for any Electron / Tauri / sidecar architecture that wants to observe an in-process agent without leaking credentials into the runtime the agent has access to.
 
 ## Setup inside DAEMON
 
-DAEMON users follow these steps inside the IDE — no code changes required:
+Users configure the integration in-app — no code changes:
 
-1. **Generate a Voight key** in `voight.xyz/dashboard/settings` (one-click). The key is shown once and prefixed `vk_`.
+1. **Generate a Voight key** at [voight.xyz/dashboard/settings](https://voight.xyz/dashboard/settings). The key is shown once and prefixed `vk_`.
 2. **Open DAEMON Settings → Integrations → Voight Observability** and paste the key.
-3. **Pick a privacy level** (Standard recommended for most workspaces).
-4. **Test connection** — DAEMON sends a synthetic event and confirms it lands in your Voight dashboard.
-5. **Run an agent.** Every event now streams to Voight in real time.
+3. **Pick a privacy level** — defaults to `standard` (recommended).
+4. **Send a test event** — DAEMON ships one synthetic event and verifies it lands in your Voight dashboard before any live agent run.
+5. **Run an agent** — every subsequent event streams to Voight in real time.
 
-The full step-by-step lives in DAEMON's own docs: [Voight Observability — daemonide.tech](https://www.daemonide.tech/docs/voight-observability).
+The full DAEMON-side walkthrough lives at [daemonide.tech/docs/voight-observability](https://www.daemonide.tech/docs/voight-observability).
 
-## Safety guarantees
+## Privacy — three levels, scrubbed locally
 
-- **API key encrypted** through DAEMON's secure key system — never exposed to the renderer process or to running agents.
-- **Events scrubbed before queueing** — privacy filtering happens before the HTTP request is built.
-- **Retry-aware** — DAEMON honours Voight's HTTP status codes (5xx + 429 retry with backoff; 4xx skip).
-- **Fire-and-forget** — Voight ingestion never blocks the agent. If `api.voight.xyz` is unreachable, the event is swallowed locally and the agent continues.
+DAEMON implements Voight's [three-level privacy model](/privacy/overview) in the main process, so scrubbing happens **before transmission** — sensitive content never leaves the machine in clear form.
 
-## Pricing alignment
+| Level | Behaviour |
+|---|---|
+| **Minimal** | Timing + outcomes only. No prompts, no responses, no file paths, no commands. |
+| **Standard** (default) | Full content with local pattern scrubbing applied to prompts, responses, terminal output, and metadata. |
+| **Full** | Raw content as captured. Internal debugging only. |
 
-DAEMON is a **Voight Enterprise** partner — workspaces running DAEMON get the full Enterprise feature set (unlimited agents, extended retention, priority support). The Voight key you paste into DAEMON's settings unlocks the same dashboard you'd see on any other tier.
+The scrubber redacts private keys, JWTs, API credentials, email addresses, phone numbers, and payment card numbers — see [PII patterns](/privacy/pii-patterns) for the complete list (12 named patterns + Luhn-validated cards).
 
-See [pricing](/pricing) for the tier matrix.
+## Retry + status handling
+
+DAEMON respects Voight's ingestion contract exactly:
+
+| Status | DAEMON behaviour |
+|---|---|
+| `202 Accepted` | Event ingested |
+| `400` | Bad payload — skip retry, surface in DAEMON's local error log |
+| `401` | Invalid `VOIGHT_KEY` — DAEMON shows a credentials error |
+| `410` | Agent deleted in Voight — DAEMON stops sending for that agent |
+| `429` | Rate-limited — back off honouring `Retry-After` |
+| `5xx` | Transient — retry with exponential backoff |
+
+Failed dispatches never block the agent — Voight ingestion is fire-and-forget by design.
+
+## Why this combination works
+
+DAEMON gives you the workspace where Solana agents run: Claude / Codex reasoning over real code, Shipline pushing programs to devnet/mainnet, Phantom signing transactions, MCP tools touching Helius / Jupiter / Metaplex / PumpFun. That's a dense, high-stakes surface — agents proposing on-chain actions with real money attached.
+
+Voight gives that surface a memory. Every agent decision, every tool the agent reached for, every approval the human gave or denied, every transaction signature, every error — reviewable in a timeline, grouped by session, filterable by model / outcome / tool, costed automatically.
+
+The two products compose without either side needing to know the other's internals: DAEMON speaks Voight's HTTP contract from the main process, Voight stores and renders.
 
 ## Links
 
-- [DAEMON website](https://www.daemonide.tech)
+- [DAEMON website](https://www.daemonide.tech) · [DAEMON GitHub](https://github.com/daemonide) (MIT)
 - [DAEMON's Voight integration guide](https://www.daemonide.tech/docs/voight-observability)
 - [Voight HTTP API](/sdk/http-api) — the surface DAEMON uses
-- [Privacy overview](/privacy/overview) — what gets scrubbed, when
-- [Events reference](/api-reference/events) — full event schema
+- [Event types reference](/concepts/events)
+- [Privacy overview](/privacy/overview) · [PII patterns](/privacy/pii-patterns)
