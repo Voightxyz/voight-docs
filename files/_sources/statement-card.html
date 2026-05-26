@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Voight — GDPR Card</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #0a0a0f; }
+  body {
+    width: 1200px; height: 630px;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #ededf0;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    box-sizing: border-box;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ===== Subtle grid background (the "cuadritos") ===== */
+  body::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.028) 1px, transparent 1px);
+    background-size: 56px 56px;
+    background-position: -1px -1px;
+    pointer-events: none;
+  }
+
+  .stage {
+    position: relative;
+    z-index: 1;
+    width: 100%; height: 100%;
+    padding: 64px 72px;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+
+  /* ===== Top row: lockup left + status pill right ===== */
+  .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .lockup {
+    display: inline-flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .lockup .icon-frame {
+    width: 60px; height: 60px;
+    border: 1px solid rgba(237,237,240,0.22);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.015);
+  }
+  .lockup .icon-frame svg {
+    width: 30px; height: 30px;
+  }
+  .lockup .wordmark {
+    font-size: 40px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: #ededf0;
+    line-height: 1;
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px;
+    border: 1px solid rgba(237,237,240,0.22);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.015);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    color: #ededf0;
+    text-transform: uppercase;
+  }
+  .status-pill .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #4ade80;
+    box-shadow: 0 0 8px rgba(74,222,128,0.6);
+  }
+
+  /* ===== Middle: eyebrow + headline + lede ===== */
+  .middle {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 22px;
+    padding-top: 20px;
+  }
+  .eyebrow {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: #888c95;
+  }
+  h1 {
+    font-size: 68px;
+    line-height: 1.02;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: #ffffff;
+    margin: 0;
+  }
+  h1 .soft {
+    color: #888c95;
+    font-weight: 700;
+  }
+  .lede {
+    font-size: 21px;
+    line-height: 1.45;
+    color: #bcbfc4;
+    margin: 0;
+    max-width: 920px;
+    font-weight: 400;
+  }
+  .lede em {
+    font-style: italic;
+    font-weight: 500;
+    color: #ededf0;
+  }
+
+  /* ===== Bottom: stats row left + URL right ===== */
+  .bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .stats {
+    display: flex;
+    gap: 56px;
+  }
+  .stat .num {
+    font-size: 30px;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  .stat .label {
+    font-size: 12px;
+    color: #888c95;
+    margin-top: 8px;
+    letter-spacing: 0.04em;
+    line-height: 1.35;
+  }
+  .url {
+    font-family: "Menlo", "SF Mono", "Consolas", monospace;
+    font-size: 15px;
+    color: #ededf0;
+    letter-spacing: -0.005em;
+  }
+  .url .dim { color: #6e7178; }
+</style>
+</head>
+<body>
+  <div class="stage">
+
+    <div class="top">
+      <div class="lockup">
+        <div class="icon-frame">
+          <svg viewBox="0 0 24 24" aria-label="Voight">
+            <g stroke="#ededf0" stroke-width="1.5" stroke-linecap="butt" fill="none">
+              <line x1="3.7" y1="3" x2="20.3" y2="3"/>
+              <line x1="2.8" y1="4.5" x2="11" y2="19"/>
+              <line x1="21.2" y1="4.5" x2="13" y2="19"/>
+            </g>
+          </svg>
+        </div>
+        <div class="wordmark">Voight</div>
+      </div>
+
+      <div class="status-pill">
+        <div class="dot"></div>
+        Compliance · v1.0
+      </div>
+    </div>
+
+    <div class="middle">
+      <div class="eyebrow">Trust &amp; Security</div>
+      <h1>GDPR compliance,<br/><span class="soft">formally documented.</span></h1>
+      <p class="lede">Controller identity, <em>lawful basis</em>, <em>sub-processors</em>, international transfers, and the <em>Records of Processing Activities</em> under Article 30 — published as a versioned, 35-page document ready for procurement review.</p>
+    </div>
+
+    <div class="bottom">
+      <div class="stats">
+        <div class="stat"><div class="num">35</div><div class="label">pages, public</div></div>
+        <div class="stat"><div class="num">3</div><div class="label">sub-processors</div></div>
+        <div class="stat"><div class="num">Art. 6(1)(b)</div><div class="label">lawful basis</div></div>
+      </div>
+      <div class="url">docs.voight.xyz<span class="dim">/trust/gdpr</span></div>
+    </div>
+
+  </div>
+</body>
+</html>
