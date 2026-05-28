@@ -1,0 +1,62 @@
+---
+title: OWASP LLM Top 10
+description: "How Voight aligns with the OWASP Top 10 for LLM Applications (v2.0) — a risk-by-risk map of where Voight helps you detect, investigate, and constrain each risk, and an honest account of the two it can't address."
+"og:image": "https://raw.githubusercontent.com/Voightxyz/voight-docs/main/files/voight-owasp-statement-card.png"
+"twitter:image": "https://raw.githubusercontent.com/Voightxyz/voight-docs/main/files/voight-owasp-statement-card.png"
+"twitter:card": "summary_large_image"
+---
+
+Voight relates to the **OWASP Top 10 for LLM Applications (v2.0)** from two angles, and the full document addresses both honestly: how Voight's own platform is secured, and how Voight helps you address each risk in your own LLM application.
+
+## Quick reference
+
+| Field | Value |
+| --- | --- |
+| Framework | OWASP Top 10 for LLM Applications, v2.0 |
+| Voight's own role | Not an LLM application today; observability platform |
+| Strongest alignments | LLM02 (Sensitive Info Disclosure), LLM10 (Unbounded Consumption) |
+| Honest gaps | LLM04 (Data/Model Poisoning), LLM08 (Vector/Embedding) |
+| Posture | Detection & monitoring — not inline prevention |
+| Security Contact | `team@voight.xyz` |
+| Document Version | 1.0 — May 2026 |
+
+## Download the full document
+
+<Card title="Voight — OWASP LLM Top 10 Alignment" icon="file-pdf" href="https://raw.githubusercontent.com/Voightxyz/voight-docs/main/files/voight-owasp-llm-alignment.pdf">
+  **19 pages · Version 1.0 · May 2026**
+
+  A risk-by-risk map of all ten OWASP LLM risks, Voight's own security posture, a coverage matrix, and an explicit statement of what Voight does *not* do.
+</Card>
+
+## The honest framing
+
+Two principles run through the document:
+
+1. **Observability is detection and monitoring, not prevention.** For most risks, Voight helps you *see* and *investigate* a problem — it does not sit inline to *block* it. Where this matters, the document says so.
+2. **No claimed coverage we don't have.** Two of the ten risks fall outside what an observability platform addresses, because Voight neither trains models nor manages vector stores. The document states this plainly rather than stretch a weak angle.
+
+## Coverage at a glance
+
+| Code | Risk | Voight alignment |
+| --- | --- | :---: |
+| LLM01 | Prompt Injection | Strong (detective) |
+| LLM02 | Sensitive Information Disclosure | **Strongest** |
+| LLM03 | Supply Chain | Moderate |
+| LLM04 | Data and Model Poisoning | Limited |
+| LLM05 | Improper Output Handling | Strong (detective) |
+| LLM06 | Excessive Agency | Strong (detective) |
+| LLM07 | System Prompt Leakage | Strong (telemetry) |
+| LLM08 | Vector and Embedding Weaknesses | Limited |
+| LLM09 | Misinformation | Moderate |
+| LLM10 | Unbounded Consumption | **Strong** |
+
+## Voight's own posture
+
+Today, Voight does not operate a large language model within its own product — it is the observability platform that *receives* LLM telemetry. The document records Voight's platform security baseline (shared with the [GDPR documentation](/trust/gdpr)) and a forward commitment: when Voight's roadmap LLM features (Smart Trace, Prompt Scorer, Debug Agent) reach production, this document will be re-versioned to assess each against the relevant risks, holding our own features to the same standard we help our customers meet.
+
+## See also
+
+- [GDPR](/trust/gdpr) — Voight's data protection alignment
+- [Privacy overview](/privacy/overview) — the 3-level local capture model behind LLM02
+- [PII patterns](/privacy/pii-patterns) — the 13 patterns Standard mode scrubs
+- [Trust & Security](/trust/overview) — all our compliance frameworks

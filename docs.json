@@ -23,7 +23,8 @@
           {
             "group": "Compliance frameworks",
             "pages": [
-              "trust/gdpr"
+              "trust/gdpr",
+              "trust/owasp-llm"
             ]
           }
         ]
