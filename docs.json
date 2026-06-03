@@ -24,7 +24,8 @@
             "group": "Compliance frameworks",
             "pages": [
               "trust/gdpr",
-              "trust/owasp-llm"
+              "trust/owasp-llm",
+              "trust/nist-ai-rmf"
             ]
           }
         ]
