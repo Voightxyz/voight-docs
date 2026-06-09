@@ -5,6 +5,20 @@ description: "What shipped, when."
 
 SDK releases follow [semver](https://semver.org/). Backend and dashboard ship continuously from `main` without version tags.
 
+## Week of 2026-06-08 — Bitfrost (Python) 0.1.0
+
+Python joins the family. [`bitfrost`](/python/bitfrost) is a drop-in OpenTelemetry exporter for Python LLM apps — the Python counterpart to `@voightxyz/vercel-ai`. Same backend, same dashboard, different runtime; events from both land side-by-side under the same agent.
+
+### New
+
+- **`bitfrost` 0.1.0** — `pip install bitfrost`. One line (`bitfrost.quickstart()`) auto-detects and instruments openai / anthropic / litellm / smolagents. Built on the OpenTelemetry GenAI semantic conventions (v1.27 and v1.32+), so it works with the instrumentation libraries you already use. [Get started →](/python/bitfrost)
+- **Standalone-first.** Capture to your terminal, a JSONL file, or SQLite with zero network calls — Voight is one optional backend, never a requirement. Ships five backends, four auto-instrument helpers, a rich CLI, an interactive TUI, and an offline local web dashboard (`bitfrost serve`).
+- **Private by default.** Three privacy levels with in-process PII scrubbing (12 patterns + credit-card Luhn) applied before any event leaves the process.
+
+<Note>
+  Bitfrost is open source (MIT) on [GitHub](https://github.com/Voightxyz/bitfrost) and works entirely on its own. Point it at Voight only when you want hosted dashboards and per-user spend.
+</Note>
+
 ## Week of 2026-05-18 — Vercel AI SDK support, install wizard, GLM provider
 
 A short recap of what shipped this week. Per-package version notes live in the sections below.

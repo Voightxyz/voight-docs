@@ -65,6 +65,12 @@
             ]
           },
           {
+            "group": "Python",
+            "pages": [
+              "python/bitfrost"
+            ]
+          },
+          {
             "group": "Integrations",
             "pages": [
               "integrations/overview",

@@ -1,0 +1,106 @@
+---
+title: Bitfrost (Python)
+description: "Drop-in OpenTelemetry observability for Python LLM apps — standalone, or shipping to Voight."
+---
+
+`bitfrost` is a Python package that turns the OpenTelemetry spans your LLM
+libraries already emit into a clean, queryable event stream — in your
+terminal, in a local web dashboard, in SQLite, or shipped to Voight. One
+line to start, no account required.
+
+It's the Python counterpart to the JavaScript [`@voightxyz/vercel-ai`](/ai-apps/vercel-ai)
+exporter: same backend, same dashboard, different runtime. Events from
+both land side-by-side under the same agent.
+
+## Install
+
+```bash
+pip install bitfrost                 # core
+pip install 'bitfrost[cli,serve]'    # + CLI, TUI, and local web dashboard
+pip install 'bitfrost[all]'          # everything
+```
+
+Python 3.10–3.13, MIT licensed.
+
+## Quick start
+
+```python
+import bitfrost
+
+bitfrost.quickstart(agent="my-app")   # auto-detects openai / anthropic / litellm / smolagents
+```
+
+Every LLM call now streams to your terminal — color-coded, with tokens,
+latency, and an estimated cost. No network calls, no account.
+
+## Ship to Voight
+
+The hosted dashboard is one opt-in backend:
+
+```python
+import bitfrost
+from bitfrost.backends.voight import VoightBackend
+
+bitfrost.instrument_auto(backend=VoightBackend(api_key="vk_..."), agent="my-app")
+```
+
+Set `VOIGHT_KEY` in the environment and you can drop the `api_key` argument.
+Events appear under **AI Apps** alongside your other SDKs.
+
+## Backends
+
+| Backend | Import | Use it for |
+| --- | --- | --- |
+| Console | `bitfrost.backends.console.ConsoleBackend` | live, color-coded terminal output |
+| SQLite | `bitfrost.backends.sqlite.SQLiteBackend` | persistent local log; powers `bitfrost serve` |
+| JSONL | `bitfrost.backends.jsonl.JSONLBackend` | one JSON object per line; replay-able |
+| OTLP/HTTP | `bitfrost.backends.otlp.OTLPBackend` | POST events as JSON to any collector or webhook |
+| Voight | `bitfrost.backends.voight.VoightBackend` | hosted dashboards (opt-in) |
+| Tee | `bitfrost.backends.tee.TeeBackend` | fan out to several at once |
+
+## Auto-instrument helpers
+
+```python
+import bitfrost
+
+bitfrost.instrument_openai()
+bitfrost.instrument_anthropic()
+bitfrost.instrument_litellm()
+bitfrost.instrument_smolagents()
+bitfrost.instrument_auto()    # every supported lib that's installed
+```
+
+Each accepts `backend`, `agent`, `session_id`, and `privacy`.
+
+## CLI
+
+```bash
+bitfrost watch  capture.db        # live tail
+bitfrost replay capture.jsonl     # re-render a captured run
+bitfrost query  capture.db "SELECT model, COUNT(*) FROM events GROUP BY model"
+bitfrost tui    capture.db        # full-screen terminal dashboard
+bitfrost serve  capture.db        # local web dashboard
+```
+
+## Privacy
+
+Three levels, applied in-process before any event is sent:
+
+- `minimal` — metadata only, no prompt/response content
+- `standard` *(default)* — content kept, PII scrubbed (12 patterns + Luhn)
+- `full` — everything verbatim (local debugging only)
+
+```python
+bitfrost.instrument_openai(privacy="minimal")
+```
+
+## Standalone by design
+
+Bitfrost's core has no dependency on any hosted service. The terminal
+output, SQLite log, JSONL files, CLI, TUI, and web dashboard all work with
+zero network access. Voight is one backend among several — recommended
+for managed dashboards and per-user cost attribution, never required.
+
+See the [README](https://github.com/Voightxyz/bitfrost) and the
+[cookbook](https://github.com/Voightxyz/bitfrost/blob/main/docs/cookbook.md)
+for more.
