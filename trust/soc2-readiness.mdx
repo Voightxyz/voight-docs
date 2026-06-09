@@ -1,0 +1,67 @@
+---
+title: SOC 2 Readiness
+description: "Voight's controls mapped to the AICPA Trust Services Criteria — Security, Availability, Confidentiality — with known gaps published, not hidden. The honest answer to 'do you have SOC 2?'"
+"og:image": "https://raw.githubusercontent.com/Voightxyz/voight-docs/main/files/voight-soc2-statement-card.png"
+"twitter:image": "https://raw.githubusercontent.com/Voightxyz/voight-docs/main/files/voight-soc2-statement-card.png"
+"twitter:card": "summary_large_image"
+---
+
+**Voight is not SOC 2 certified — and this page doesn't pretend otherwise.** What we publish instead is a full **readiness assessment**: every implemented control mapped to the Trust Services Criteria a SOC 2 auditor would evaluate, with the gaps stated plainly. A Type II examination is on the roadmap, triggered by enterprise demand.
+
+## Quick reference
+
+| Field | Value |
+| --- | --- |
+| Framework | AICPA Trust Services Criteria (2017, rev. 2022) |
+| Criteria in scope | Security (Common Criteria) · Availability · Confidentiality |
+| Out of scope | Processing Integrity · Privacy (covered by [GDPR](/trust/gdpr), a stricter regime) |
+| Certification status | **Not certified** — readiness phase, Type II on roadmap |
+| Inherited attestations | Vercel, Railway, Privy — all SOC 2 Type II |
+| Known gaps | 6, published in §6 of the document |
+| Security Contact | `team@voight.xyz` |
+| Document Version | 1.0 — June 2026 |
+
+## Download the full document
+
+<Card title="Voight — SOC 2 Readiness Documentation" icon="file-pdf" href="https://raw.githubusercontent.com/Voightxyz/voight-docs/main/files/voight-soc2-readiness.pdf">
+  **17 pages · Version 1.0 · June 2026**
+
+  Control-by-control mapping across CC1–CC9, Availability, and Confidentiality; the six known gaps; inherited vendor controls; and the documented path to a Type II report.
+</Card>
+
+## Readiness vs. certified — the difference
+
+| | Readiness (this) | SOC 2 Type II |
+| --- | --- | --- |
+| Produced by | Voight (self-assessment) | Licensed CPA firm |
+| Attests | Controls designed & documented | Controls operated effectively over 3–12 months |
+| Independent verification | None | Yes |
+
+A readiness document that lists no gaps is not credible. Ours lists six — including the structural ones (segregation of duties in a founding-size team, no independent pentest yet) — together with the path to closing each.
+
+## What's already in place
+
+- **Encryption everywhere** — TLS 1.3 in transit, AES-256 at rest, API keys hashed
+- **No password storage** — authentication delegated to Privy (SOC 2 Type II)
+- **Local-first privacy** — 3-level PII scrubbing before telemetry leaves your process
+- **Incident response** — written procedure with T+0 → T+7d timeframes
+- **Supply chain** — Dependabot monitoring, npm provenance attestations, defined remediation SLAs
+- **Audited foundations** — all three infrastructure vendors hold current SOC 2 Type II reports
+
+## The path to a Type II report
+
+1. Readiness (this document) ✓
+2. Gap closure (tracked in revisions)
+3. Compliance platform onboarding (continuous evidence)
+4. Optional Type I examination
+5. 3–12 month observation window
+6. Type II report — available to customers under NDA
+
+We have deliberately not committed to a public date. The trigger is enterprise demand: when a material engagement requires the report, the examination gets scheduled and this page gets updated.
+
+## See also
+
+- [GDPR](/trust/gdpr) — data protection alignment (covers the Privacy criterion)
+- [OWASP LLM Top 10](/trust/owasp-llm) — LLM security alignment
+- [NIST AI RMF](/trust/nist-ai-rmf) — AI risk management alignment
+- [Trust & Security](/trust/overview) — all our compliance frameworks

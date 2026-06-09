@@ -25,7 +25,8 @@
             "pages": [
               "trust/gdpr",
               "trust/owasp-llm",
-              "trust/nist-ai-rmf"
+              "trust/nist-ai-rmf",
+              "trust/soc2-readiness"
             ]
           }
         ]
