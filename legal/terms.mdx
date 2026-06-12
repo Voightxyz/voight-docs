@@ -1,0 +1,94 @@
+---
+title: Terms of Service
+description: "The agreement that governs your use of Voight — accounts, plans, billing, acceptable use, and the legal fine print, written to be readable."
+---
+
+**Effective date: June 12, 2026 · Version 1.0**
+
+These Terms of Service (the "Terms") are a binding agreement between you and **Galaxyhub Labs Inc.**, a Delaware (United States) corporation doing business as **Voight** ("Voight", "we", "us"), and govern your access to and use of the Voight platform: the websites at `voight.xyz` and `docs.voight.xyz`, the dashboard, the API at `api.voight.xyz`, and the official SDKs (together, the "Service").
+
+By creating an account or using the Service you accept these Terms. If you are using the Service on behalf of a company, you represent that you have authority to bind that company, and "you" means that company.
+
+## 1. The Service
+
+Voight provides real-time observability for AI agents: SDKs and APIs that let you capture telemetry from your AI applications, and a dashboard to inspect, alert on, and export that data.
+
+The Service is currently offered in an **early-access (beta) phase**. Features may change, be added, or be removed as the platform matures. We will not remove your access to data you have already captured without the notice described in Section 9.
+
+## 2. Eligibility and accounts
+
+- You must be at least **16 years old** to use the Service.
+- Accounts are created through our authentication provider, [Privy](https://privy.io). You may sign in with an email address or a wallet. An embedded Solana wallet may be created for your account as part of sign-up.
+- You are responsible for everything that happens under your account and your API keys. Keep your API keys secret; if a key is exposed, revoke it from the dashboard immediately.
+- One person or legal entity per account. Don't share accounts to circumvent plan limits.
+
+## 3. Plans, fees, and billing
+
+- The Service is offered in tiers — **Free**, **Pro**, and **Enterprise** — with the limits and prices published on the [pricing page](/pricing). The pricing page is part of these Terms.
+- Paid plans are billed **in advance, per monthly period**. Supported payment methods are shown at checkout and may include card payments (processed by Stripe) and cryptocurrency payments (USDC on Solana).
+- **Crypto payments are final when confirmed on-chain.** Blockchain transactions cannot be reversed by us. Prepaid balances and credits are applied to your account and consumed by subscription fees or usage as described at purchase.
+- Usage limits (events per month, number of agents) are measured per calendar month (UTC). If you exceed your plan's limits we may stop accepting new data for the remainder of the month or ask you to upgrade; we will never silently charge you for overage you did not agree to.
+- We may change prices with at least **30 days' notice**. Price changes apply from your next billing period, never retroactively.
+- Prices are exclusive of taxes; you are responsible for any applicable VAT, sales, or withholding taxes.
+
+## 4. Cancellation and refunds
+
+- You may cancel a paid plan at any time from the dashboard or by emailing `team@voight.xyz`. Cancellation takes effect at the **end of the current billing period**; until then the plan stays active.
+- Except where required by law, fees already paid are **non-refundable** — we do not prorate partial months. If we materially fail to provide the Service during a period you paid for, contact us and we will work out a fair credit or refund.
+- We may suspend or terminate accounts that violate Section 6 (Acceptable use). Suspension for violation does not entitle you to a refund.
+
+## 5. Your data
+
+- **You own your telemetry.** Everything your SDKs send to Voight — events, traces, metadata — remains yours. You grant us a limited license to host, process, and display that data solely to provide the Service to you.
+- The SDK's [privacy levels](/privacy/overview) (Minimal / Standard / Full) control what leaves your machine. You are responsible for choosing a level appropriate to your data and for ensuring you have the right to send us whatever you send.
+- Do not send us data you are not allowed to share — in particular, do not deliberately send special-category personal data (health, biometric, etc.) or other people's secrets.
+- You can export your data and you can delete your agents and events at any time. Deletion is described in [Data handling](/privacy/data-handling).
+- How we treat personal data is described in the [Privacy Policy](/legal/privacy), which is incorporated into these Terms.
+
+## 6. Acceptable use
+
+You agree not to:
+
+- use the Service for anything illegal, or to monitor systems you do not own or lack authorization to monitor;
+- probe, breach, or test the vulnerability of the Service except through coordinated disclosure (`team@voight.xyz`);
+- circumvent plan limits, rate limits, or metering — including by creating multiple accounts;
+- resell or white-label the Service without a written agreement with us;
+- reverse engineer the platform, except to the extent a license (e.g. an open-source SDK license) or applicable law expressly permits it;
+- interfere with other users' use of the Service.
+
+## 7. Intellectual property
+
+The Service — its software, design, and content other than your data — belongs to Voight and its licensors. Our SDKs are published under their respective open-source licenses on [GitHub](https://github.com/Voightxyz); those licenses govern the SDK code itself.
+
+You may not use the Voight name or logo to imply endorsement without permission.
+
+## 8. Third-party services
+
+The Service integrates with third parties you may choose to connect — for example Slack (alert delivery), Privy (authentication and wallets), and Stripe (payments). Your use of those services is governed by their own terms. We are not responsible for third-party services, and an integration's availability is not a guarantee it will exist forever.
+
+## 9. Termination
+
+- You may close your account at any time.
+- We may suspend or terminate your access if you materially breach these Terms and (where the breach is curable) fail to cure it within 14 days of notice.
+- We may discontinue the Service or any tier with at least **30 days' notice**, in which case we will provide a way to export your data and refund any prepaid fees covering the period after discontinuation.
+- Sections 5 (data ownership), 7, 10, 11, and 12 survive termination.
+
+## 10. Disclaimers
+
+The Service is provided **"as is" and "as available"**, without warranties of any kind, express or implied — including merchantability, fitness for a particular purpose, and non-infringement. We do not warrant that the Service will be uninterrupted or error-free, or that telemetry capture will be lossless. Voight is an observability tool; it does not control, and is not responsible for, the behavior of your AI agents.
+
+## 11. Limitation of liability
+
+To the maximum extent permitted by law, neither party is liable for indirect, incidental, special, consequential, or punitive damages, or for lost profits, revenue, or data. Voight's total aggregate liability under these Terms is limited to the **greater of the fees you paid us in the 12 months before the claim, or USD $100**. Nothing in these Terms limits liability that cannot be limited by law (such as fraud or willful misconduct).
+
+## 12. Governing law
+
+These Terms are governed by the laws of the **State of Delaware, United States**, excluding its conflict-of-law rules. Disputes will be resolved in the state or federal courts located in Delaware, and both parties consent to their jurisdiction. If you are a consumer in the European Union, this section does not deprive you of protections granted by mandatory provisions of the law of your country of residence.
+
+## 13. Changes to these Terms
+
+We may update these Terms as the Service evolves. For material changes we will give at least **14 days' notice** (by email or an in-product notice) before the new Terms take effect. Continuing to use the Service after that date constitutes acceptance. The version and effective date at the top of this page always identify the current Terms.
+
+## 14. Contact
+
+Questions about these Terms: `team@voight.xyz`. We acknowledge within 48 hours.

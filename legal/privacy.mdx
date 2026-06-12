@@ -1,0 +1,91 @@
+---
+title: Privacy Policy
+description: "What personal data Voight collects, why, where it lives, who can see it, and the rights you have over it."
+---
+
+**Effective date: June 12, 2026 · Version 1.0**
+
+This Privacy Policy explains how **Galaxyhub Labs Inc.**, doing business as **Voight** ("Voight", "we", "us"), handles personal data when you use the Voight platform — the websites at `voight.xyz` and `docs.voight.xyz`, the dashboard, the API at `api.voight.xyz`, and the official SDKs (together, the "Service").
+
+The short version: we collect the minimum needed to run an observability service, we never sell personal data, we never use it for advertising, and the SDK is designed so that *you* decide what telemetry leaves your machine in the first place.
+
+This page is the policy. The deeper technical detail lives in our published [GDPR compliance documentation](/trust/gdpr) (35 pages, versioned), [Privacy overview](/privacy/overview), and [Data handling](/privacy/data-handling) — all of which this policy incorporates by reference.
+
+## 1. Who is responsible
+
+| Field | Value |
+| --- | --- |
+| Controller | Galaxyhub Labs Inc. (d/b/a Voight), a Delaware (USA) corporation |
+| GDPR main establishment | Spain (Article 4(16)) |
+| Supervisory authority | [AEPD — Agencia Española de Protección de Datos](https://www.aepd.es) |
+| Privacy contact | `team@voight.xyz` |
+
+For **account data** (your email, wallet address, billing records) Voight acts as a **data controller**. For **telemetry your applications send us** (events, traces), Voight acts as a **processor on your behalf** — you decide what is captured, via the SDK's [privacy levels](/privacy/overview).
+
+## 2. What we collect
+
+**Account data** — when you sign up through our authentication provider, [Privy](https://privy.io):
+
+- Email address and/or wallet address, and the Privy account identifier
+- An embedded Solana wallet address may be created for your account
+- Plan, subscription status, and billing records when you pay for the Service
+
+**Telemetry** — what your SDKs send, which depends entirely on the capture level you pick (Minimal / Standard / Full). The field-by-field breakdown is in the [Privacy overview](/privacy/overview). At Minimal, no prompts, file paths, or content leave your machine at all; at Standard, content is PII-scrubbed locally before transmission.
+
+**Service configuration** — settings you create in the dashboard: agents, alert rules, and notification channels. If you connect Slack, we store the webhook URL Slack issues for the channel you picked; it is write-only in our API (always returned masked) and used solely to deliver the alerts you configured.
+
+**Usage metrics** — event counts and agent counts per billing month, used for plan limits and shown to you in Settings.
+
+**Payment data** — card payments are processed by Stripe; we never see or store full card numbers. Crypto payments are recorded on the Solana blockchain by their nature; we store the transaction reference needed to credit your account.
+
+We do **not** collect advertising identifiers, run third-party analytics trackers, or buy data about you from anyone.
+
+## 3. Why we process it, and on what basis
+
+We process personal data to provide the Service under our contract with you (GDPR **Article 6(1)(b)**): operating the dashboard, ingesting and displaying your telemetry, delivering the alerts you configure, metering usage against plan limits, billing, and support. That is our single lawful basis — no consent-fatigue banners, no behavioral profiling, no marketing lists.
+
+Personal data is **never sold** and never shared with advertisers.
+
+## 4. Who else touches it
+
+We use a deliberately small set of sub-processors, each SOC 2 Type II attested with a published GDPR DPA:
+
+| Sub-processor | Purpose |
+| --- | --- |
+| [Vercel](https://vercel.com) | Web hosting |
+| [Railway](https://railway.app) | API hosting and Postgres database (United States) |
+| [Privy](https://privy.io) | Authentication and embedded wallets |
+| [Stripe](https://stripe.com) | Card payment processing (when you pay by card) |
+
+Integrations **you** choose to connect (such as Slack alert delivery) receive only the data needed for that integration — in Slack's case, the content of the alert notifications you configured.
+
+The full sub-processor register, with contractual detail, is Annex A of the [GDPR documentation](/trust/gdpr).
+
+## 5. Where it lives, and for how long
+
+- Data is stored in Railway-hosted Postgres in the United States. Transfers from the EU are covered by the **2021 EU Standard Contractual Clauses**; the Transfer Impact Assessment is summarized in the GDPR documentation.
+- Telemetry retention follows your plan tier: **7 days (Free), 90 days (Pro), 1 year (Enterprise)**.
+- Account data is kept while your account exists and deleted or anonymized when you close it, except records we must keep (e.g. invoices, for tax law).
+- Transport is TLS 1.2+; API keys are stored only as SHA-256 hashes; access controls are described in [Data handling](/privacy/data-handling) and the [SOC 2 readiness assessment](/trust/soc2-readiness).
+
+## 6. Your rights
+
+If you are in the EU/EEA (and in many other jurisdictions), you have the rights of access, rectification, erasure, restriction, portability, and objection. Email `team@voight.xyz` **from the address tied to your account**, state the right you want to exercise, and we respond within 30 days. You can also complain to your supervisory authority — for Voight that is the AEPD (Spain).
+
+Most of it you can do yourself without asking: export your data, delete agents and their events, and revoke API keys, all from the dashboard.
+
+## 7. Cookies
+
+We use only **essential** cookies and local storage: the session tokens set by Privy to keep you signed in, and a first-party cookie (`voight_handle`) that lets the public site reflect your signed-in state. No advertising or cross-site tracking cookies, no third-party analytics cookies. Because everything is essential, there is no consent banner to click through — there is nothing to opt out of.
+
+## 8. Children
+
+The Service is built for professionals and requires users to be at least **16 years old**. We do not knowingly process children's data; if you believe a minor has created an account, email `team@voight.xyz` and we will delete it.
+
+## 9. Changes to this policy
+
+When this policy changes materially we will notify you by email or an in-product notice before the change takes effect. The version and effective date at the top of this page always identify the current policy; prior versions are preserved in the document's git history.
+
+## 10. Contact
+
+Privacy questions, data subject requests, or anything this page left unclear: `team@voight.xyz`. We acknowledge within 48 hours.
