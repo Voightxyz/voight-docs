@@ -1,0 +1,41 @@
+---
+title: Frameworks
+description: "The runtime engine your agent runs on. Hermes is live today; OpenClaw and ElizaOS are next."
+---
+
+A **framework** is the engine your agent runs on — the loop that turns the model's decisions into real tool calls, memory, and channel activity. You pick one when you deploy. Voight hosts and runs it for you on private infrastructure; you never manage a server.
+
+## Available now
+
+<Card title="Hermes" icon="check" horizontal>
+  **NousResearch · recommended.** The full agentic loop — tool use, persistent memory and built-in web search. Every Hermes agent runs on its own **private Cloud Run** service, isolated per agent, and scales to zero when idle so it stays cheap to keep online.
+</Card>
+
+Hermes is the default and the only framework that provisions a live agent today. It's a mature, tool-calling runtime — the model reasons, calls tools, reads and writes its memory, and acts across your connected channels.
+
+## Coming soon
+
+These appear in the deploy flow and can be selected, but don't provision a live agent yet — they're on the roadmap.
+
+<CardGroup cols={2}>
+  <Card title="OpenClaw" icon="clock">
+    A **code-first agent runtime** — geared toward agents that live in a codebase and ship work. On the way.
+  </Card>
+  <Card title="ElizaOS" icon="clock">
+    A **multi-agent OS** — for orchestrating fleets of agents that coordinate. On the way.
+  </Card>
+</CardGroup>
+
+<Note>
+More frameworks are on the way. If you pick one that isn't live yet, your choice is saved, but the agent won't run until that framework ships — deploy on **Hermes** for a working agent today.
+</Note>
+
+## Why it's a choice
+
+Different frameworks suit different jobs: a single autonomous worker (Hermes), an agent that ships code (OpenClaw), or a coordinated fleet (ElizaOS). Making the framework a first-class choice at deploy time means your agent isn't locked to one philosophy — as the lineup grows, you pick the engine that fits the work.
+
+## Next
+
+- [Models](/agents/models) — the LLM that does the thinking inside the framework
+- [Channels](/agents/channels) — where the running agent shows up
+- [Quickstart](/agents/quickstart) — deploy on Hermes now

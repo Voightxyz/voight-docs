@@ -11,6 +11,33 @@
   "navigation": {
     "anchors": [
       {
+        "anchor": "Agents",
+        "icon": "robot",
+        "groups": [
+          {
+            "group": "Voight Agents",
+            "pages": [
+              "agents/overview",
+              "agents/quickstart"
+            ]
+          },
+          {
+            "group": "How it works",
+            "pages": [
+              "agents/frameworks",
+              "agents/models",
+              "agents/channels"
+            ]
+          },
+          {
+            "group": "Plans",
+            "pages": [
+              "agents/pricing"
+            ]
+          }
+        ]
+      },
+      {
         "anchor": "Trust & Security",
         "icon": "shield-check",
         "groups": [
