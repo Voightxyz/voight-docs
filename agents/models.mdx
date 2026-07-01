@@ -1,0 +1,48 @@
+---
+title: Models
+description: "The LLM behind your agent. Sponsored GLM and MiMo families at launch, with bring-your-own-key on the roadmap."
+---
+
+The **model** is the brain doing the thinking inside your [framework](/agents/frameworks). You pick one at deploy time and can change it later.
+
+<Note>
+Agents need **tool-calling**. A model that can't call tools can't run the agent loop, so the picker only offers models verified to work end to end.
+</Note>
+
+## Sponsored at launch
+
+At launch, inference is routed through **Voight's own OpenRouter key** — you don't bring a key, and these families are subsidized so getting started is cheap (or free with your first agent). Two families are available:
+
+<CardGroup cols={2}>
+  <Card title="GLM — by Z.ai" icon="brain">
+    The GLM lineup (4.5, 4.5 Air, 4.6 and up). Strong general reasoning and tool use.
+  </Card>
+  <Card title="MiMo — by Xiaomi" icon="microchip">
+    Fast, inexpensive, tool-capable, with a very large context window.
+  </Card>
+</CardGroup>
+
+The launch **default is MiMo v2.5** — cheap, quick, tool-capable, and comfortable with long context. It's a sensible starting brain for most agents; switch to a GLM model if you want more reasoning depth.
+
+## Bring your own key — coming soon
+
+The next phase opens the model choice wide open, with cost billed to your own provider account:
+
+- **BYOK · OpenRouter** — paste your OpenRouter key and pick *any* model in the OpenRouter catalog.
+- **BYOK · Direct** — connect a provider key directly: **OpenAI, Anthropic, Gemini, Qwen, Z.ai, or Xiaomi**. Calls go straight to the vendor.
+
+Per-model cost controls land alongside token metering in the same phase.
+
+## Choosing
+
+| You want… | Pick |
+| --- | --- |
+| The cheapest capable default | **MiMo v2.5** (launch default) |
+| More reasoning depth | A **GLM** model |
+| A specific frontier model | Wait for **BYOK**, or tell us what you need |
+
+## Next
+
+- [Frameworks](/agents/frameworks) — the engine the model runs inside
+- [Channels](/agents/channels) — where the agent works
+- [Pricing](/agents/pricing) — what a running agent costs
