@@ -1,0 +1,102 @@
+---
+title: Templates
+description: "The starting persona and toolset for your agent: General, Sales, Social, or Prediction Markets."
+---
+
+A **template** is the lane you pick when you create an agent (step 3 of the wizard). One choice seeds two things at once:
+
+- **The persona.** A focus block that defines the agent's job and how it behaves, folded into its brief together with the role and tone you type.
+- **The toolset.** The capabilities provisioned into the agent's private runtime, tuned to that job. A focused template never gets *extra* tools; it gets a sharper subset of the full set.
+
+<Note>
+The template is a **create-time choice**: it is baked into the agent when it's provisioned, and an existing agent can't be switched to a different template later. To change lanes, deploy a new agent. (The persona *text* itself stays editable in Settings at any time.)
+</Note>
+
+## The four templates
+
+<CardGroup cols={2}>
+  <Card title="General" icon="asterisk">
+    The default. No lane: the full capability set and a neutral brief. Best when the job is unique, or when you plan to write your own persona.
+  </Card>
+  <Card title="Sales" icon="handshake">
+    Prospects, qualifies, and reaches out. Uses its memory as a lightweight CRM and moves every conversation toward a call, demo, or purchase.
+  </Card>
+  <Card title="Social" icon="megaphone">
+    Plans, writes, and publishes content in your voice, and keeps up with mentions across your connected channels.
+  </Card>
+  <Card title="Prediction Markets" icon="chart-line">
+    A prediction-markets analyst. Researches events, reasons to a committed pick, and reads live Polymarket prices.
+  </Card>
+</CardGroup>
+
+## Capabilities by template
+
+Every template ships with web search, files and a terminal, persistent memory, skills, and scheduled tasks. The differences:
+
+| Capability | General | Sales | Social | Prediction |
+| --- | :-: | :-: | :-: | :-: |
+| Web search & research | ✓ | ✓ | ✓ | ✓ |
+| Persistent memory | ✓ | ✓ | ✓ | ✓ |
+| Scheduled tasks | ✓ | ✓ | ✓ | ✓ |
+| Vision (understands images) | ✓ | ✗ | ✓ | ✗ |
+| Browse the skill hub | ✓ | ✗ | ✗ | ✗ |
+
+Focused templates deliberately drop what their job doesn't need: a sales agent has no reason to browse the skill hub, and vision stays where images actually matter (social content, and the general all-rounder).
+
+## Sales
+
+Built to fill a pipeline, not to spam one.
+
+- **Prospects and qualifies.** Researches a lead or company before reaching out and notes *why* they fit.
+- **Reaches out for real.** With X or LinkedIn [connected](/agents/channels), it drafts personalized outreach and follow-ups and sends them once you approve. Every message is matched to the person; it never blasts a generic template.
+- **Memory as CRM.** Tracks who it contacted, what they said, and the next step (prospect, stage, last touch, next action) in its persistent memory.
+- **Follow-up cadences.** Add a recurring task on the Tasks board and it runs the follow-up round automatically each time it fires.
+
+Anything sent under your name (a public post or a private DM) needs your approval first, and a "no" from a prospect is respected.
+
+## Social
+
+A social media manager that keeps you present without sounding like a bot wrote it.
+
+- **Creates content.** Native posts per platform (punchy for X, more substantive for LinkedIn), hooks, threads, and hashtags. One idea becomes several platform-native posts, with web search for current context.
+- **Publishes.** With X or LinkedIn connected, it posts once you approve; drafts always land with you first. Put publishing on a calendar with a recurring task.
+- **Engages.** Reads recent mentions and replies on connected channels and drafts on-brand responses for your approval.
+- **Stays consistent.** Keeps voice and cadence steady, and tracks what it has already posted in memory so it doesn't repeat itself.
+- **Sees images.** Vision is included, since visuals are core to social content.
+
+## Prediction Markets
+
+An analyst identity, not a general assistant with market data bolted on. It thinks in odds, edges, and catalysts.
+
+- **Research first.** Form, injuries, referees, weather, head-to-head, stakes, news: it builds its own read from fundamentals. Market prices are one input (sentiment and payout reference), never the center of the analysis.
+- **Commits to a pick.** It gives you *its* winner with its own probabilities and the decisive factors, and re-examines honestly when you push back: it neither digs in nor caves.
+- **Reads live markets.** A built-in Polymarket skill pulls live markets, prices, volume, and history, and the agent hands you the direct link to the exact market so you land one click from acting.
+- **Odds cards in chat.** Markets render as visual odds cards (outcomes, implied probabilities, the agent's pick highlighted) right in the dashboard chat.
+- **Monitors over time.** A recurring task turns it into a watcher: it re-runs on schedule and alerts you on a connected channel when odds move or a catalyst hits.
+
+<Note>
+Prediction agents give **research, not financial advice**. They never take custody of funds, sign transactions, or place positions. The agent surfaces the opportunity; you decide and execute.
+</Note>
+
+## Templates and your own brief
+
+A template is a seed, not a cage:
+
+- The **role and tone** you type in the wizard are folded into the template's brief.
+- Pasting a **full custom persona** (up to ~8,000 characters) replaces the template's brief entirely. The template still decides the toolset.
+- After deploy, the persona stays editable in the agent's Settings.
+
+## Choosing
+
+| You want… | Pick |
+| --- | --- |
+| An all-rounder, or a fully custom persona | **General** (default) |
+| Outreach, qualification, and follow-ups | **Sales** |
+| Content, publishing, and engagement | **Social** |
+| Odds, edges, and committed picks | **Prediction Markets** |
+
+## Next
+
+- [Models](/agents/models): the brain that runs the template
+- [Channels](/agents/channels): connect X, LinkedIn, Telegram, GitHub
+- [Quickstart](/agents/quickstart): deploy one in about a minute

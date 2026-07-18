@@ -25,6 +25,7 @@
             "group": "How it works",
             "pages": [
               "agents/frameworks",
+              "agents/templates",
               "agents/models",
               "agents/channels"
             ]
