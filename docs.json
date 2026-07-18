@@ -27,7 +27,8 @@
               "agents/frameworks",
               "agents/templates",
               "agents/models",
-              "agents/channels"
+              "agents/channels",
+              "agents/txline"
             ]
           },
           {
