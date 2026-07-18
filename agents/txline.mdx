@@ -1,0 +1,68 @@
+---
+title: "TxLINE sports data"
+description: "Verifiable live sports odds inside Prediction Markets agents: real-time demargined probabilities, a deterministic sharp-movement detector, and picks anchored on Solana."
+---
+
+**TxLINE** is TxODDS' Solana-anchored sports data feed: fixtures, live odds, and scores, with on-chain validation proofs. [Prediction Markets](/agents/templates#prediction-markets) agents plug into it to read the market in real time, detect sharp movement deterministically, and anchor their own picks on Solana. Verifiable data in, verifiable predictions out.
+
+<Note>
+TxLINE is in **preview** on selected Prediction Markets agents, graduating from our entry to the TxLINE World Cup hackathon. The full integration is open source: [voight-txline-agent](https://github.com/Voightxyz/voight-txline-agent).
+</Note>
+
+## What the agent reads
+
+- **Fixtures.** Upcoming and in-play matches, participants, start times, game state.
+- **Demargined odds.** TxLINE's StablePrice feed delivers implied probabilities with the bookmaker margin already removed: a value of `58.2` means the market genuinely implies 58.2%. No margin math, no distortion.
+- **Live scores and updates.** Snapshot plus a live update stream while a match runs.
+- **The markets that matter.** Match result (1X2), over/under goals, and Asian handicap.
+
+## The Sharp Movement Detector
+
+The core design decision, learned in production: **the model never does market math.** A deterministic script builds implied-probability series from the feed and applies calibrated z-score thresholds. The agent narrates, investigates, and delivers; it never estimates a movement itself.
+
+| Mode | What it does |
+| --- | --- |
+| **Scan** | Sweeps every active fixture for sharp moves. Runs on the agent's recurring task. |
+| **Watch** | A 60-second live loop on one match, for in-play monitoring. |
+| **Replay** | Backtests a recorded stream. Same input, same alerts, byte for byte. |
+
+Each alert carries the market, the outcome, the probability move (from → to, in points), and its z-score. Calibrated on a real captured World Cup semifinal feed: 1,773 events produced exactly 2 alerts and zero false positives.
+
+## The alert flow
+
+1. A **recurring task** wakes the agent on schedule and scans active fixtures.
+2. The detector fires only on genuine steam moves.
+3. The agent researches the likely cause with live web search (a goal, a red card, lineup news) so the alert arrives explained, not just flagged.
+4. The alert lands on a connected channel (Telegram) with a market card. No alert, no noise: a silent market produces one short line.
+
+## Picks anchored on Solana
+
+Every pick the agent commits to is logged in its persistent ledger (id, date, market, pick, probability). Ask it to **anchor the pick on-chain** and it records a Solana memo transaction: the SHA-256 of the pick's immutable core, plus a human-readable summary that reads directly on any block explorer. The chat shows a card with a **Verify on Solscan** link.
+
+```text
+voight-pick:<sha256> | France to win @58% · World Cup 2026 Third-Place: France vs England (2026-07-17)
+```
+
+The hash makes the pick tamper-evident: it provably existed before the event and can't be backdated or altered. Verification is independent, from the public repo, with no trust in Voight required.
+
+## Driving it from chat
+
+| You say | The agent does |
+| --- | --- |
+| "What fixtures are coming up?" | Pulls the live fixture list from TxLINE. |
+| "Any sharp movement?" | Runs the detector and reports alerts, or says the market is quiet. |
+| "Research France vs England and commit to a pick" | Full-picture research (form, injuries, referee, weather, head-to-head), its own probability, a committed pick. |
+| "Anchor that pick on-chain" | Logs the pick, attests it on Solana, and returns the Verify on Solscan card. |
+
+<Tip>
+Be direct: "anchor this pick on-chain" triggers the attestation flow. Asking for "a verifiable proof" in the middle of another request can send the agent down a different path.
+</Tip>
+
+## Verify it yourself
+
+The client, the detector, the attestation tool, and a real captured match feed (755&nbsp;KB of live odds from the England vs Argentina semifinal) are public in [voight-txline-agent](https://github.com/Voightxyz/voight-txline-agent). Replay the capture and you get the same two alerts the agent got, deterministically.
+
+## Next
+
+- [Templates](/agents/templates#prediction-markets): the Prediction Markets template
+- [Quickstart](/agents/quickstart): deploy an agent in about a minute
