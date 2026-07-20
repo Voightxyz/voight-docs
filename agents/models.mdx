@@ -1,6 +1,6 @@
 ---
 title: Models
-description: "The LLM behind your agent. Sponsored GLM and MiMo families at launch, with bring-your-own-key on the roadmap."
+description: "The LLM behind your agent. GLM 4.6 by default (sponsored by Z.ai), the MiMo family as an option, and bring-your-own-key on the roadmap."
 ---
 
 The **model** is the brain doing the thinking inside your [framework](/agents/frameworks). You pick one at deploy time and can change it later.
@@ -9,20 +9,22 @@ The **model** is the brain doing the thinking inside your [framework](/agents/fr
 Agents need **tool-calling**. A model that can't call tools can't run the agent loop, so the picker only offers models verified to work end to end.
 </Note>
 
-## Sponsored at launch
+## The lineup
 
-At launch, inference is routed through **Voight's own OpenRouter key** — you don't bring a key, and these families are subsidized so getting started is cheap (or free with your first agent). Two families are available:
+Inference is routed through **Voight's own key** — you don't bring one. Two families are available:
 
 <CardGroup cols={2}>
   <Card title="GLM — by Z.ai" icon="brain">
-    The GLM lineup (4.5, 4.5 Air, 4.6 and up). Strong general reasoning and tool use.
+    The GLM lineup (4.5, 4.6, 4.7, 5.x). Strong general reasoning and tool use. Sponsored by Z.ai.
   </Card>
   <Card title="MiMo — by Xiaomi" icon="microchip">
     Fast, inexpensive, tool-capable, with a very large context window.
   </Card>
 </CardGroup>
 
-The launch **default is MiMo v2.5** — cheap, quick, tool-capable, and comfortable with long context. It's a sensible starting brain for most agents; switch to a GLM model if you want more reasoning depth.
+The **default is GLM 4.6**: balanced, proven in production, and strong at tool use. MiMo stays available as the cheapest per-token option.
+
+Every new account starts with a **welcome inference credit**, and usage past it draws from your prepaid credit balance: you always see what a model costs before you pick it.
 
 ## Bring your own key — coming soon
 
@@ -37,8 +39,9 @@ Per-model cost controls land alongside token metering in the same phase.
 
 | You want… | Pick |
 | --- | --- |
-| The cheapest capable default | **MiMo v2.5** (launch default) |
-| More reasoning depth | A **GLM** model |
+| The proven, balanced default | **GLM 4.6** (default) |
+| The cheapest per-token option | **MiMo v2.5** |
+| More reasoning depth | **GLM 5.x** |
 | A specific frontier model | Wait for **BYOK**, or tell us what you need |
 
 ## Next
