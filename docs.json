@@ -104,7 +104,8 @@
             "group": "Integrations",
             "pages": [
               "integrations/overview",
-              "integrations/daemon"
+              "integrations/daemon",
+              "integrations/nosana"
             ]
           },
           {
