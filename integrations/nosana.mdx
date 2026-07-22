@@ -27,7 +27,7 @@ flowchart LR
   D --> E["Voight event ingest"]
   E --> F["Nosana-Powered badge<br/>voight.xyz/explore"]
   E --> G["MPL Agent Registry entry<br/>on Solana mainnet"]
-  H["Read-only scanner<br/>chain + IPFS, no SDK needed"] -.discovers.-> E
+  H["Read-only scanner<br/>chain + IPFS, no SDK needed"] -. discovers .-> E
 ```
 
 Two ways in, same pipeline: agents that embed the SDK report themselves with live telemetry, and the read-only scanner discovers agents straight from public chain + IPFS data, no integration required.
