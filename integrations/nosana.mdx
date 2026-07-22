@@ -3,11 +3,11 @@ title: "Nosana"
 description: "Run AI agents on Nosana's decentralized GPU network and let Voight detect them, correlate them on-chain, and showcase them with the Nosana-Powered badge."
 ---
 
-**[Nosana](https://nosana.com)** is a decentralized GPU network on Solana: every job that runs on it is a real on-chain account anyone can verify. Voight closes the loop for AI agents running there: the **`@voightxyz/nosana`** SDK detects the job from inside the container, correlates it with its on-chain account, and Voight's public explorer shows the agent as **Nosana-Powered**, with an entry in the MPL Agent Registry.
+**[Nosana](https://nosana.com)** is a decentralized GPU network on Solana: every job that runs on it is a real on-chain account anyone can verify. Voight closes the loop for AI agents running there: the **[`@voightxyz/nosana`](https://www.npmjs.com/package/@voightxyz/nosana)** SDK detects the job from inside the container, correlates it with its on-chain account, and Voight's public explorer shows the agent as **Nosana-Powered**, with an entry in the MPL Agent Registry. Verifiable compute in, verifiable agents out.
 
 <CardGroup cols={3}>
   <Card title="Auto-detection" icon="radar">
-    One call reads the job id a Nosana node injects into every container.
+    One call reads the job id a Nosana node injects into every container. Zero dependencies.
   </Card>
   <Card title="On-chain correlation" icon="link">
     The job id IS a Solana account: state, GPU market, node, price, and timings, verifiable by anyone.
@@ -16,6 +16,21 @@ description: "Run AI agents on Nosana's decentralized GPU network and let Voight
     The agent's explorer profile carries the badge, linked to the job for independent verification.
   </Card>
 </CardGroup>
+
+## How it fits together
+
+```mermaid
+flowchart LR
+  A["Nosana node injects<br/>NOSANA_ID into the container"] --> B["detectNosana()<br/>job id = on-chain account"]
+  B --> C["fetchNosanaJob()<br/>state · market · node · price · IPFS"]
+  C --> D["nosanaAttributes()<br/>stable nosana.* attributes"]
+  D --> E["Voight event ingest"]
+  E --> F["Nosana-Powered badge<br/>voight.xyz/explore"]
+  E --> G["MPL Agent Registry entry<br/>on Solana mainnet"]
+  H["Read-only scanner<br/>chain + IPFS, no SDK needed"] -.discovers.-> E
+```
+
+Two ways in, same pipeline: agents that embed the SDK report themselves with live telemetry, and the read-only scanner discovers agents straight from public chain + IPFS data, no integration required.
 
 ## Quickstart
 
@@ -28,52 +43,92 @@ import { correlateNosana, nosanaAttributes } from '@voightxyz/nosana'
 
 const nosana = await correlateNosana()
 if (nosana) {
-  // Running on a Nosana GPU — attach the attributes to your Voight events:
   const attrs = nosanaAttributes(nosana)
   // { 'nosana.job_id': '…', 'nosana.state': 'RUNNING', 'nosana.market': '…', … }
+  // merge attrs into the metadata of any event you send to Voight
 }
 ```
 
-Send any event to Voight carrying those `nosana.*` attributes in its metadata and the pipeline does the rest: the agent's profile is stamped at ingest, the badge renders in the [public explorer](https://voight.xyz/explore), and the ecosystem stats count it under `nosanaPowered`.
+Send any event to Voight carrying those `nosana.*` attributes and the pipeline does the rest: the agent's profile is stamped at ingest, the badge renders in the [public explorer](https://voight.xyz/explore), and the ecosystem stats count it under `nosanaPowered`.
 
 <Tip>
-Zero runtime dependencies, ESM + CJS + types. If you'd rather not touch your agent's code, chain the ready-made [boot beacon](https://github.com/Voightxyz/Nosana-SDK/tree/main/examples) into your start command — one line, any framework.
+Zero runtime dependencies, ESM + CJS + TypeScript types. If you'd rather not touch your agent's code, chain the ready-made [boot beacon](https://github.com/Voightxyz/Nosana-SDK/tree/main/examples) into your start command: one line, any framework.
 </Tip>
 
-## How detection works
+## Detection reference
 
-A Nosana node injects **`NOSANA_ID`** into every job container, and its value is the address of the job's on-chain account (verified against the `nosana-ci` source, not guessed). That single value gives Voight everything:
+A Nosana node injects the job id into every `container/run` operation. Grounded in the [`nosana-ci/nosana-cli`](https://github.com/nosana-ci/nosana-cli) source, not guessed:
 
-<Steps>
-  <Step title="Detect">
-    `detectNosana()` reads the env (with `NOSANA_JOB_ID` / `JOB_ID` fallbacks) and validates the id as a Solana pubkey.
-  </Step>
-  <Step title="Correlate">
-    `fetchNosanaJob()` reads the job account over plain JSON-RPC and decodes it: state, GPU market, node, payer, project, price in NOS, timings, and the IPFS CIDs of the job definition and result.
-  </Step>
-  <Step title="Report">
-    `nosanaAttributes()` flattens it into a stable `nosana.*` attribute set your events carry. Ingest stamps the agent; the badge and stats follow automatically.
-  </Step>
-</Steps>
+| Variable | Injected by | Meaning |
+| --- | --- | --- |
+| `NOSANA_ID` | The Nosana node, into every job container | **The job's on-chain account address** (base58 Solana pubkey). Primary signal. |
+| `NOSANA_JOB_ID`, `JOB_ID` | Gateway sidecar / explicit job definitions | Accepted fallbacks. |
+| `DEPLOYMENT_ID` | Load-balanced deployments | Groups replicas of the same deployment. |
 
-The correlation is settlement-friendly: a failure to reach the RPC never breaks the agent (the SDK fails open), and Voight can enrich server-side from the same public account.
+`detectNosana()` validates the id as a base58 pubkey before producing any link: a malformed value still detects (the env var is the signal) but never renders a broken URL.
+
+## On-chain correlation
+
+`fetchNosanaJob()` reads the job account over plain JSON-RPC and decodes it locally, no web3.js, no anchor. What comes back:
+
+| Field | Meaning |
+| --- | --- |
+| `state` | `QUEUED` · `RUNNING` · `COMPLETED` · `STOPPED` (running derived from a claimed, unfinished job) |
+| `market` / `node` | GPU market the job was posted to, and the node running it |
+| `payer` / `project` | Who paid, and which project posted it: the ownership anchor |
+| `priceNos` | Job price in NOS |
+| `timeStart` / `timeEnd` / `timeoutSeconds` | Unix timings |
+| `ipfsJobCid` / `ipfsResultCid` | IPFS CIDs of the job definition and result, reconstructed from the on-chain digests |
+| `dashboardUrl` / `explorerUrl` | Nosana dashboard and Solscan links |
+
+<Accordion title="Decoding guarantees">
+
+- The account owner must be the Nosana Jobs program (`nosJhNRqr2bc9g1nfGDcXXTXvYUmxD4cVwy2pMWhrYM`).
+- The 8-byte **Anchor discriminator** must match `JobAccount`: the program owns several account types (markets, runs), and an owner check alone would decode a market queue into garbage. Anything else is rejected.
+- The layout is taken from the program source (`nosana-programs` → `nosana-jobs/src/state.rs`), and the decoder is validated against live mainnet accounts, including IPFS CIDs that resolve to the actual job definitions.
+- `correlateNosana()` never throws on RPC failures: an observability hiccup must never break an agent. Voight can also enrich server-side from the same public account.
+
+</Accordion>
 
 ## What shows up in Voight
 
 - **Explorer badge.** The agent's card and profile show **Nosana-Powered** in Nosana green; the profile badge links straight to the job on Nosana's dashboard so anyone can verify the GPU workload.
-- **Ecosystem stats.** `GET /v1/stats` reports `nosanaPowered`, and the agents API accepts a `nosana=true` filter.
-- **Agentic Registry.** Nosana-powered agents can be registered in the MPL Agent Registry (Metaplex) with a public `agent_uri` that carries the job linkage — on-chain identity pointing at on-chain compute.
+- **Ecosystem stats.** [`GET /v1/stats`](https://api.voight.xyz/v1/stats) reports `nosanaPowered`, and the agents API accepts a `nosana=true` filter.
+- **Agentic Registry.** Nosana-powered agents get registered in the MPL Agent Registry (Metaplex) with a public `agent_uri` carrying the job linkage: on-chain identity pointing at on-chain compute, with the Voight × Nosana card as its image.
 
 ## Framework identification
 
-Voight recognizes the agent's framework two ways:
+Voight recognizes the agent's framework two ways. **Active always wins**:
 
-1. **Active** (exact): set `VOIGHT_FRAMEWORK` (`elizaos`, `hermes`, `openclaw`, …) when running the beacon or sending events.
-2. **Passive** (no integration): Nosana job definitions are public on IPFS, so the image, command, and env reveal the framework — ElizaOS, Mastra, LangGraph, CrewAI, Hermes, or custom agents. The full signal table lives in the SDK repo: [frameworks](https://github.com/Voightxyz/Nosana-SDK/tree/main/frameworks).
+| Path | How | Precision |
+| --- | --- | --- |
+| **Active** | `VOIGHT_FRAMEWORK` env (`elizaos`, `hermes`, `openclaw`, …) with the beacon or your own events | Exact |
+| **Passive** | Job definitions are public on IPFS: image, command, and env reveal the framework | Inferred |
 
-## Proven on mainnet
+Passive signals recognized today: **ElizaOS** (`eliza` images, `--character` commands), **Mastra** (incl. Nosana's `agent-challenge` starter), **LangGraph/LangChain**, **CrewAI**, **Hermes**, and custom agents (`agent` in the image name). Model servers and GPU infra (vLLM, Ollama, ComfyUI, Folding@home) are classified out, and anything ambiguous is skipped: the classifier never lists a random training job as an "agent". Full signal table and how to make your agent identifiable: [frameworks spec](https://github.com/Voightxyz/Nosana-SDK/tree/main/frameworks).
 
-The full loop ran live on a real Nosana GPU job, and every artifact is public: the [job on Nosana's dashboard](https://dashboard.nosana.com/jobs/96zb2aU1VjCEsnZHDX8GCtzLk5afVFGrQjPPxKva7YMp), the [agent with its badge in the explorer](https://voight.xyz/agent/cmrw2pnli2txzjktriyp92kov), and the [MPL Agent Registry entry](https://www.metaplex.com/agents/CfAWScgEEcDFujo1B8VxTMT9yxqByW8LfEAGTKUFeq5z) minted on Solana mainnet. The verification table with every reference: [Nosana-SDK · Proven live on mainnet](https://github.com/Voightxyz/Nosana-SDK#proven-live-on-mainnet).
+## Proven live on mainnet
+
+The full loop ran on a real Nosana GPU job (July 22, 2026). Every artifact is public and independently verifiable:
+
+| Step | Evidence |
+| --- | --- |
+| Nosana GPU job | [`96zb2aU1…7YMp`](https://dashboard.nosana.com/jobs/96zb2aU1VjCEsnZHDX8GCtzLk5afVFGrQjPPxKva7YMp) — the job logs show the SDK detecting its own id |
+| Job definition on IPFS | [`QmZPu3Qq…uR85`](https://nosana.mypinata.cloud/ipfs/QmZPu3Qq8eUpME3NrieQ1YFWrQm2xsyD4E4AMx3e3CuR85) |
+| Agent in the explorer | [`voight.xyz/agent/cmrw2pnli…`](https://voight.xyz/agent/cmrw2pnli2txzjktriyp92kov) — Nosana-Powered badge, linked to the job |
+| Ecosystem stats | [`/v1/stats`](https://api.voight.xyz/v1/stats) → `nosanaPowered` |
+| MPL Agent Registry | [`CfAWScgE…eq5z`](https://www.metaplex.com/agents/CfAWScgEEcDFujo1B8VxTMT9yxqByW8LfEAGTKUFeq5z) minted on Solana mainnet |
+
+What the agent printed from inside the GPU container, verbatim:
+
+```text
+[probe] Voight × Nosana acceptance probe
+[probe] NOSANA_ID = 96zb2aU1VjCEsnZHDX8GCtzLk5afVFGrQjPPxKva7YMp
+[probe] detection: {"jobId":"96zb2aU1VjCEsnZHDX8GCtzLk5afVFGrQjPPxKva7YMp",
+  "source":"NOSANA_ID","isAddress":true,
+  "dashboardUrl":"https://dashboard.nosana.com/jobs/96zb2aU1VjCEsnZHDX8GCtzLk5afVFGrQjPPxKva7YMp"}
+[probe] voight ingest → 200
+```
 
 <Note>
 Job definitions are public on IPFS: anything you put in a job's env (like an ingest API key) is world-readable. Use scoped, revocable keys and rotate them after a run.
@@ -82,5 +137,5 @@ Job definitions are public on IPFS: anything you put in a job's env (like an ing
 ## Links
 
 - npm: [`@voightxyz/nosana`](https://www.npmjs.com/package/@voightxyz/nosana)
-- Source + probe + scanner: [github.com/Voightxyz/Nosana-SDK](https://github.com/Voightxyz/Nosana-SDK)
-- Nosana: [nosana.com](https://nosana.com) · [dashboard](https://dashboard.nosana.com)
+- Source, probe, and scanner: [github.com/Voightxyz/Nosana-SDK](https://github.com/Voightxyz/Nosana-SDK)
+- Nosana: [nosana.com](https://nosana.com) · [dashboard.nosana.com](https://dashboard.nosana.com)
