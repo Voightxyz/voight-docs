@@ -26,6 +26,10 @@ The **default is GLM 4.6**: balanced, proven in production, and strong at tool u
 
 Every new account starts with a **welcome inference credit**, and usage past it draws from your prepaid credit balance: you always see what a model costs before you pick it.
 
+## On a Nosana GPU: local, private
+
+Agents hosted on a [Nosana GPU](/agents/gpu-hosting) don't use the sponsored lineup. They run **Hermes 3 8B** (NousResearch's Llama 3.1 8B fine-tune, trained for the Hermes runtime's tool-calling format) **locally on the job's own GPU**, with a 64K context window. Inference never leaves the GPU and no provider key exists in the container. It is the private, verifiable option; for heavy reasoning, the GLM lineup on Voight Cloud is stronger.
+
 ## Bring your own key — coming soon
 
 The next phase opens the model choice wide open, with cost billed to your own provider account:
@@ -42,6 +46,7 @@ Per-model cost controls land alongside token metering in the same phase.
 | The proven, balanced default | **GLM 4.6** (default) |
 | The cheapest per-token option | **MiMo v2.5** |
 | More reasoning depth | **GLM 5.x** |
+| Inference that never leaves a GPU you rent | **Nosana GPU** hosting (Hermes 3 8B, local) |
 | A specific frontier model | Wait for **BYOK**, or tell us what you need |
 
 ## Next

@@ -27,6 +27,7 @@
               "agents/frameworks",
               "agents/templates",
               "agents/models",
+              "agents/gpu-hosting",
               "agents/channels",
               "agents/txline"
             ]
