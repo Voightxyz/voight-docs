@@ -1,0 +1,81 @@
+---
+title: GPU hosting on Nosana
+description: "Run your agent on a dedicated GPU from Nosana's decentralized network, with a local model and no inference key anywhere: verifiable on-chain, woken on demand, renewed while in use."
+---
+
+When you deploy an agent you choose **where it runs**. The default is **Voight Cloud**: private, scale-to-zero infrastructure with sponsored models. The alternative is **Nosana GPU**: a dedicated GPU rented from [Nosana](https://nosana.com)'s decentralized network, running a model **inside the job itself**.
+
+<CardGroup cols={3}>
+  <Card title="Your own GPU" icon="microchip">
+    One agent, one GPU job. Nobody shares it with you.
+  </Card>
+  <Card title="Inference never leaves it" icon="lock">
+    The model runs locally on that GPU. There is no inference API key in the container to leak.
+  </Card>
+  <Card title="Verifiable on-chain" icon="link">
+    Every GPU job is a real Solana account. The Overview links straight to it on Nosana's explorer.
+  </Card>
+</CardGroup>
+
+## Deploying on a GPU
+
+In the deploy flow, the **Hosting** step offers the two hosts. Pick **Nosana GPU** and a GPU market:
+
+| Market | Status |
+| --- | --- |
+| NVIDIA RTX 3060 | Live |
+| NVIDIA RTX 3090 | Coming soon |
+| NVIDIA RTX 4090 | Coming soon |
+
+A GPU agent takes **a few minutes** to come up (the node claims the job, pulls the image, and loads the model) instead of the ~60 seconds of Voight Cloud. You'll see **Deploying** until the agent's gateway answers, then **Live**. Everything else works the same: chat, Telegram, GitHub, scheduled tasks, memory.
+
+<Note>
+The model is fixed per host. GPU agents run **Hermes 3 8B** locally (see [Models](/agents/models)); the sponsored GLM / MiMo lineup belongs to Voight Cloud.
+</Note>
+
+## The hourly lifecycle
+
+GPU time on Nosana is rented in **hour blocks**. Rather than hide that, the platform treats the hour as a first-class part of the agent's life:
+
+<Steps>
+  <Step title="In use: renewed in place">
+    An agent that has been active recently gets its job **extended before the hour lapses**. Same job, same GPU, no restart: a conversation simply continues across the boundary.
+  </Step>
+  <Step title="Idle: it stops, honestly">
+    If nobody used the agent for a while, the job ends at its hour and the Overview shows **GPU stopped**. Your agent is not gone: its identity, channels, and memory stay; only the GPU is released.
+  </Step>
+  <Step title="Stopped: wake it on demand">
+    Press **Wake up** on the Overview, or just **message it** (in the dashboard or on Telegram): the message starts the GPU back up. Scheduled tasks wake their agent too, and retry once it's live. A wake takes a few minutes, like a deploy.
+  </Step>
+</Steps>
+
+Automatic renewals are capped per day so a forgotten agent can't run forever; you can always wake it yourself.
+
+## Memory across GPU sessions
+
+Each GPU job is ephemeral, but your agent's **curated memory is not**: it is restored when the GPU comes up and saved back periodically and at shutdown. An agent that stops and wakes picks up where it left off. The storage layout is the same one Voight Cloud agents use, so memory is portable across hosts.
+
+## Model and privacy
+
+GPU agents run **Hermes 3 8B**, NousResearch's fine-tune of Llama 3.1 8B trained for the Hermes runtime's tool-calling format, served locally on the job's GPU with a 64K context window. Because inference happens on the GPU you rented, **no model provider ever sees your conversations**, and no inference key exists in the container.
+
+Two honest caveats:
+
+- **The node operator can inspect the container.** Nosana is a decentralized network: the machine running your job belongs to someone else. Treat the agent's memory as visible to that host. For sensitive work, prefer Voight Cloud.
+- **8B is not a frontier model.** It is fast, private, and capable for everyday tasks and web research. For heavy reasoning, Voight Cloud's GLM lineup is the stronger pick.
+
+What stays protected regardless: the keys inside the container are **derived per agent and revocable**, so a key lifted from one job never opens another agent's gateway or memory.
+
+## Verify it yourself
+
+The agent's Overview shows **Nosana GPU** as its runtime, linked to the **current on-chain job** on [dashboard.nosana.com](https://dashboard.nosana.com): market, node, and timings, verifiable by anyone. The container image and deployment tooling are open source at [github.com/Voightxyz/nosana-agents](https://github.com/Voightxyz/nosana-agents), with a build log of every live measurement.
+
+## Cost
+
+A GPU agent costs the same **$15 per 30 days** as any agent (see [Pricing](/agents/pricing)). GPU time is **currently included**; per-hour metering is planned and we'll announce the rate before it turns on. You can also top up your balance in **NOS**, Nosana's token, alongside USDC and SOL.
+
+## Next
+
+- [Quickstart](/agents/quickstart): deploy an agent and pick its host
+- [Models](/agents/models): what runs where
+- [Nosana integration](/integrations/nosana): observing agents that run on Nosana, the other direction

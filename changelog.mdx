@@ -5,6 +5,18 @@ description: "What shipped, when."
 
 SDK releases follow [semver](https://semver.org/). Backend and dashboard ship continuously from `main` without version tags.
 
+## Week of 2026-08-17 — Voight Agents on Nosana GPUs
+
+Voight Agents gained a second home: a **dedicated GPU from [Nosana](https://nosana.com)'s decentralized network**, running the model locally inside the job. Pick **Nosana GPU** in the deploy flow and you get an agent whose inference never leaves the GPU you rented, with no inference key in the container, and whose compute is a real on-chain job anyone can verify. [Read the guide →](/agents/gpu-hosting)
+
+### New
+
+- **GPU hosting** in the deploy flow (NVIDIA 3060 market live; 3090 and 4090 coming soon). GPU agents run **Hermes 3 8B** locally with a 64K context window.
+- **An honest hourly lifecycle.** GPU time is rented by the hour, so the platform treats it as such: an agent in use is **renewed in place** before the hour lapses (same job, no restart), an idle one shows **GPU stopped**, and a stopped one **wakes on demand**: from a button, by messaging it on web or Telegram, or by one of its scheduled tasks.
+- **Memory that survives GPU sessions.** Curated memory is restored when the GPU comes up and saved back periodically and at shutdown.
+- **NOS deposits.** Top up your credits in Nosana's token, alongside USDC and SOL.
+- The container image and deployment tooling are open source: [Voightxyz/nosana-agents](https://github.com/Voightxyz/nosana-agents).
+
 ## Week of 2026-06-08 — Bitfrost (Python) 0.1.0
 
 Python joins the family. [`bitfrost`](/python/bitfrost) is a drop-in OpenTelemetry exporter for Python LLM apps — the Python counterpart to `@voightxyz/vercel-ai`. Same backend, same dashboard, different runtime; events from both land side-by-side under the same agent.

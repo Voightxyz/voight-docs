@@ -33,6 +33,7 @@ Give the agent an identity and pick its brain:
 - **Template** — a starting focus: **General**, **Sales**, **Social**, or **Prediction Markets**. It seeds the persona *and* the agent's toolset; see [Templates](/agents/templates).
 - **Model** — the LLM that does the thinking. The default is **GLM 4.6** (balanced, proven, tool-capable). Full list on [Models](/agents/models).
 - **Role & tone** — a one-line description of the job and a tone (Friendly / Professional / Direct / Sharp), folded into the agent's persona.
+- **Hosting**: **Voight Cloud** (default, live in about a minute) or **Nosana GPU**: a dedicated GPU running a local model, a few minutes to come up, verifiable on-chain. See [GPU hosting](/agents/gpu-hosting).
 
 <Tip>
 You can also paste a full custom persona instead of using a template — anything up to ~8,000 characters becomes the agent's brief.
@@ -40,7 +41,7 @@ You can also paste a full custom persona instead of using a template — anythin
 
 ## Step 4 — Deploy
 
-One click. Your agent is provisioned on its own private runtime and goes live in **about 60 seconds**. You'll land in its workspace with a live chat, its status, and its channels.
+One click. Your agent is provisioned on its own private runtime and goes live in **about 60 seconds** (a few minutes on a Nosana GPU, while the node loads the model). You'll land in its workspace with a live chat, its status, and its channels.
 
 ## Step 5 — Put it to work
 
