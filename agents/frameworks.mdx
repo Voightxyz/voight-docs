@@ -1,6 +1,6 @@
 ---
 title: Frameworks
-description: "The runtime engine your agent runs on. Hermes is live today; OpenClaw and ElizaOS are next."
+description: "The runtime engine your agent runs on. Hermes is live today, ZeroClaw is in preview; OpenClaw and ElizaOS are next."
 ---
 
 A **framework** is the engine your agent runs on — the loop that turns the model's decisions into real tool calls, memory, and channel activity. You pick one when you deploy. Voight hosts and runs it for you on private infrastructure; you never manage a server.
@@ -11,7 +11,15 @@ A **framework** is the engine your agent runs on — the loop that turns the mod
   **NousResearch · recommended.** The full agentic loop — tool use, persistent memory and built-in web search. Every Hermes agent runs on its own **private Cloud Run** service, isolated per agent, and scales to zero when idle so it stays cheap to keep online. Or on a dedicated [Nosana GPU](/agents/gpu-hosting), running its model locally.
 </Card>
 
-Hermes is the default and the only framework that provisions a live agent today. It's a mature, tool-calling runtime — the model reasons, calls tools, reads and writes its memory, and acts across your connected channels.
+Hermes is the default. It's a mature, tool-calling runtime — the model reasons, calls tools, reads and writes its memory, and acts across your connected channels.
+
+## In preview
+
+<Card title="ZeroClaw" icon="flask" horizontal>
+  **Rust · OpenClaw-inspired, ultra-light.** A runtime that idles at ~19 MiB of RAM, with streaming chat, server-side session threads, and a text-format tool parser that works even with models that lack native tool calling. ZeroClaw agents run **GLM 4.6 through the platform** on the same private, per-agent Cloud Run isolation as Hermes, and speak every core channel — dashboard chat (streamed), Telegram, and scheduled tasks. The runtime is version-pinned to an audited upstream release.
+</Card>
+
+ZeroClaw is fully wired end to end and rolling out: the tile already shows in the deploy flow and opens to everyone shortly. In this first version it runs on the platform's inference (no BYOK yet) and on Voight Cloud only (no GPU hosting variant).
 
 ## Coming soon
 
@@ -32,7 +40,7 @@ More frameworks are on the way. If you pick one that isn't live yet, your choice
 
 ## Why it's a choice
 
-Different frameworks suit different jobs: a single autonomous worker (Hermes), an agent that ships code (OpenClaw), or a coordinated fleet (ElizaOS). Making the framework a first-class choice at deploy time means your agent isn't locked to one philosophy — as the lineup grows, you pick the engine that fits the work.
+Different frameworks suit different jobs: a single autonomous worker (Hermes), an ultra-light runtime that squeezes the most out of every megabyte (ZeroClaw), an agent that ships code (OpenClaw), or a coordinated fleet (ElizaOS). Making the framework a first-class choice at deploy time means your agent isn't locked to one philosophy — as the lineup grows, you pick the engine that fits the work.
 
 ## Next
 
