@@ -92,6 +92,7 @@
               "ai-apps/openai",
               "ai-apps/anthropic",
               "ai-apps/vercel-ai",
+              "ai-apps/python",
               "ai-apps/glm"
             ]
           },

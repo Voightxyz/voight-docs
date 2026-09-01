@@ -1,0 +1,66 @@
+---
+title: Python (bitfrost)
+description: "One line of Python auto-instruments openai, anthropic, litellm, and smolagents, and streams every LLM call to Voight over OpenTelemetry."
+---
+
+[`bitfrost`](https://github.com/Voightxyz/bitfrost) is Voight's OpenTelemetry bridge for Python. It turns the OTel GenAI spans your LLM libraries already emit into Voight events: model calls, prompts, tokens, cost, latency, errors, and the trace tree that links them.
+
+It is also a standalone tool: without a Voight key it captures to your terminal, a JSONL file, or SQLite, with zero network calls. Point it at Voight when you want the dashboard.
+
+## Install
+
+```bash
+pip install bitfrost
+```
+
+Python 3.10+.
+
+## Quick start
+
+One line at your app's entrypoint:
+
+```python
+import bitfrost
+from bitfrost.backends.voight import VoightBackend
+
+bitfrost.quickstart(agent="my-app", backend=VoightBackend())
+```
+
+`quickstart` auto-detects and instruments every supported library it finds: `openai`, `anthropic`, `litellm`, and `smolagents`. Your normal LLM calls start streaming to the dashboard, no other code changes.
+
+`VoightBackend` reads your API key from the `VOIGHT_KEY` environment variable:
+
+```bash
+export VOIGHT_KEY="vk_..."
+```
+
+Create the key in the dashboard under Settings, or from the "Add app" guide.
+
+## What lands in Voight
+
+Each LLM call becomes one event carrying:
+
+- the model and provider, resolved from the span's `gen_ai.*` attributes (both the v1.27 and v1.32+ semantic-convention generations are understood)
+- prompt messages and the response text, subject to the privacy level
+- token counts (input, output, total): the dashboard's token and cost KPIs read these directly
+- duration, outcome, and the error message when a call fails
+- the span's own timestamp, so batched or delayed sends keep an honest timeline
+- the OpenTelemetry trace context (`traceId`, `spanId`, `parentSpanId`), so multi-step requests arrive as a tree, not a flat list
+
+## Privacy
+
+Three levels, applied before anything leaves the process: `standard` (default), `minimal` (drops prompt and response content), and `off`. PII scrubbing (12 patterns plus Luhn) runs on outbound content.
+
+```python
+bitfrost.quickstart(agent="my-app", backend=VoightBackend(), privacy="minimal")
+```
+
+## No supported library?
+
+If none of the four libraries is installed, `quickstart` still installs the tracer and warns you. Any manually created OpenTelemetry span with `gen_ai.*` attributes is captured, so custom stacks and other instrumentations keep working.
+
+## Next
+
+- [AI Apps overview](/ai-apps/overview): what the dashboard shows
+- [Tracing](/ai-apps/tracing): how events group into traces
+- [bitfrost on GitHub](https://github.com/Voightxyz/bitfrost): full README, CLI, TUI, and the local offline dashboard
