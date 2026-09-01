@@ -1,6 +1,6 @@
 ---
 title: Models
-description: "The LLM behind your agent. GLM 4.6 by default (sponsored by Z.ai), the MiMo family as an option, and bring-your-own-key on the roadmap."
+description: "The LLM behind your agent. GLM 4.6 by default, the new GLM 5.3 and 5.3 Flash, the MiMo family, and bring-your-own-key via OpenRouter or direct provider keys."
 ---
 
 The **model** is the brain doing the thinking inside your [framework](/agents/frameworks). You pick one at deploy time and can change it later.
@@ -15,37 +15,38 @@ Inference is routed through **Voight's own key** — you don't bring one. Two fa
 
 <CardGroup cols={2}>
   <Card title="GLM — by Z.ai" icon="brain">
-    The GLM lineup (4.5, 4.6, 4.7, 5.x). Strong general reasoning and tool use. Sponsored by Z.ai.
+    The GLM lineup, 4.5 through **5.3 and 5.3 Flash**. Strong general reasoning and tool use. Sponsored by Z.ai.
   </Card>
   <Card title="MiMo — by Xiaomi" icon="microchip">
     Fast, inexpensive, tool-capable, with a very large context window.
   </Card>
 </CardGroup>
 
-The **default is GLM 4.6**: balanced, proven in production, and strong at tool use. MiMo stays available as the cheapest per-token option.
+The **default is GLM 4.6**: balanced, proven in production, and strong at tool use. MiMo stays available as a low-cost option.
+
+**New: GLM 5.3 and GLM 5.3 Flash.** The newest Z.ai flagship and its fast variant, both with a 1M-token context window and full tool-calling. GLM 5.3 is the strongest reasoner in the lineup; 5.3 Flash is fast and inexpensive. Both are available everywhere a model can be picked: on Voight's key, on your own OpenRouter key, or on your own Z.ai key.
 
 Every new account starts with a **welcome inference credit**, and usage past it draws from your prepaid credit balance: you always see what a model costs before you pick it.
 
 ## On a Nosana GPU: local, private
 
-Agents hosted on a [Nosana GPU](/agents/gpu-hosting) don't use the sponsored lineup. They run **Hermes 3 8B** (NousResearch's Llama 3.1 8B fine-tune, trained for the Hermes runtime's tool-calling format) **locally on the job's own GPU**, with a 64K context window. Inference never leaves the GPU and no provider key exists in the container. It is the private, verifiable option; for heavy reasoning, the GLM lineup on Voight Cloud is stronger.
+Agents hosted on a [Nosana GPU](/agents/gpu-hosting) don't use the sponsored lineup. Hermes agents run **Hermes 3 8B** (NousResearch's Llama 3.1 8B fine-tune, trained for the Hermes runtime's tool-calling format) and ZeroClaw agents run **Qwen2.5 7B Instruct**, in both cases **locally on the job's own GPU**. Inference never leaves the GPU and no provider key exists in the container. It is the private, verifiable option; for heavy reasoning, the GLM lineup on Voight Cloud is stronger.
 
-## Bring your own key — coming soon
+## Bring your own key
 
-The next phase opens the model choice wide open, with cost billed to your own provider account:
+Open the model choice wide, with inference billed to your own provider account. Both modes live in the agent's Settings:
 
-- **BYOK · OpenRouter** — paste your OpenRouter key and pick *any* model in the OpenRouter catalog.
-- **BYOK · Direct** — connect a provider key directly: **OpenAI, Anthropic, Gemini, Qwen, Z.ai, or Xiaomi**. Calls go straight to the vendor.
-
-Per-model cost controls land alongside token metering in the same phase.
+- **BYOK · OpenRouter** — paste your OpenRouter key and pick *any* model in the OpenRouter catalog, GLM 5.3 and 5.3 Flash included.
+- **BYOK · Direct** — connect a provider key directly: **OpenAI, Anthropic, Gemini, Qwen, Z.ai, or Xiaomi**. Calls go straight to the vendor (GLM 5.3 and 5.3 Flash via your Z.ai key).
 
 ## Choosing
 
 | You want… | Pick |
 | --- | --- |
 | The proven, balanced default | **GLM 4.6** (default) |
-| The cheapest per-token option | **MiMo v2.5** |
-| More reasoning depth | **GLM 5.x** |
+| The strongest reasoning, 1M context | **GLM 5.3** |
+| Fast and cheap with 1M context | **GLM 5.3 Flash** |
+| A low-cost alternative family | **MiMo v2.5** |
 | Inference that never leaves a GPU you rent | **Nosana GPU** hosting (Hermes 3 8B, local) |
 | A specific frontier model | Wait for **BYOK**, or tell us what you need |
 
