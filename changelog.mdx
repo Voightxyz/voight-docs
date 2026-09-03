@@ -5,6 +5,20 @@ description: "What shipped, when."
 
 SDK releases follow [semver](https://semver.org/). Backend and dashboard ship continuously from `main` without version tags.
 
+## Week of 2026-08-30 — Codex verified through native OpenTelemetry, SDK 0.7.0
+
+Codex is a first-class target again, and this time on solid ground. Instead of fighting Codex Desktop's sandbox with a hooks plugin, Voight now speaks the protocol Codex itself ships: its native OpenTelemetry export, pointed at a new OTLP receiver (`POST /v1/otel/logs`). One config block, and every Codex session lands as a full trace. [Read the guide →](/sdk/codex)
+
+### New
+
+- **`@voightxyz/sdk` 0.7.0** — `setup --target=codex` writes the `[otel]` block into `~/.codex/config.toml` (with a one-time backup, and cleanup of anything the old plugin approach left behind). Re-runs are idempotent; a foreign `[otel]` exporter is detected and never overwritten.
+- **OTLP/JSON logs receiver** on the API. Maps Codex's telemetry (prompts, tool calls with durations, per-turn token usage, permission decisions, API failures) onto Voight's event taxonomy; `conversation.id` becomes the trace id, so [Smart Traces](/concepts/traces) work on Codex sessions out of the box.
+- **Privacy at the receiver.** Codex attaches your OpenAI account id and email to every record; Voight strips them (plus all `auth.*` attributes) before storage.
+
+### Changed
+
+- The dead marketplace-plugin machinery for Codex was removed from the SDK, and the install-target table now reads what it should have all along: verified, against codex-cli 0.146.
+
 ## Week of 2026-08-17 — Voight Agents on Nosana GPUs
 
 Voight Agents gained a second home: a **dedicated GPU from [Nosana](https://nosana.com)'s decentralized network**, running the model locally inside the job. Pick **Nosana GPU** in the deploy flow and you get an agent whose inference never leaves the GPU you rented, with no inference key in the container, and whose compute is a real on-chain job anyone can verify. [Read the guide →](/agents/gpu-hosting)
