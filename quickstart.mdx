@@ -7,15 +7,15 @@ Four install paths. Same dashboard, same privacy model, same API. Pick the one t
 
 ## Step 1 — Install
 
-### A · Coding agent (Claude Code, Cursor)
+### A · Coding agent (Claude Code, Cursor, Codex)
 
-A wizard writes the right hooks and env into your IDE's config. No code changes.
+A wizard writes the right config into your coding agent. No code changes.
 
 ```bash
 npx -y @voightxyz/sdk setup
 ```
 
-Verified working today: **Claude Code** and **Cursor** — the wizard auto-detects which one you're running. **Codex** integration is in an active fix cycle (Codex's sandbox blocks the hooks from reaching the SDK reliably); the wrapper exists and the changelog tracks attempts, but it isn't a target we'd recommend installing right now.
+Verified working today: **Claude Code**, **Cursor**, and **Codex**. The wizard auto-detects which one you're running (or pass `--target=claude|cursor|codex`). Claude Code and Cursor are wired through hooks; Codex connects through its native OpenTelemetry export, pointed at Voight's OTLP receiver: see the [Codex guide](/sdk/codex) for details.
 
 ### B · Autonomous agent (ElizaOS, Solana Agent Kit, custom)
 

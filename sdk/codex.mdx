@@ -1,0 +1,66 @@
+---
+title: "Codex"
+description: "Connect OpenAI Codex to Voight through its native OpenTelemetry export: one config block, every session lands as a full trace."
+---
+
+[Codex](https://developers.openai.com/codex) (OpenAI's coding agent, in its CLI, TUI and Desktop forms) ships native, opt-in OpenTelemetry export. Voight runs an OTLP receiver, so connecting the two takes one config block: no plugin, no hooks, no code changes.
+
+Once connected, every Codex session streams in as a single trace: the prompt that started it, each tool call with duration and outcome, every model call with token usage (input, output, cached, reasoning), permission decisions, and API failures. The [Smart Traces](/concepts/traces) tooling (waterfall view, deterministic diagnosis, AI explain) works on Codex sessions out of the box.
+
+Verified against codex-cli 0.146.
+
+## Setup with the wizard (recommended)
+
+```bash
+npx -y @voightxyz/sdk setup --target=codex
+```
+
+The wizard asks for your privacy level and your Voight API key (`vk_...`, from [voight.xyz/dashboard](https://voight.xyz/dashboard) → Settings → Generate key), then writes the `[otel]` block into `~/.codex/config.toml`. A one-time backup of your previous config is kept at `config.toml.voight-backup`.
+
+Restart Codex (quit the Desktop app, or start a new CLI session) and run any task. The session appears in [your dashboard](https://voight.xyz/dashboard/traces) within seconds.
+
+Running inside a Codex terminal? Plain `npx -y @voightxyz/sdk setup` auto-detects the target.
+
+## Manual setup
+
+Append this to `~/.codex/config.toml`:
+
+```toml
+[otel]
+log_user_prompt = true
+
+[otel.exporter.otlp-http]
+endpoint = "https://api.voight.xyz/v1/otel/logs"
+protocol = "json"
+headers = { Authorization = "Bearer vk_YOUR_KEY" }
+```
+
+Two details matter:
+
+- `protocol = "json"` is required. Voight's receiver answers binary protobuf with a 415 telling you exactly this.
+- `log_user_prompt = true` exports the text of your prompts so traces show what each session was about. Set it to `false` and Codex sends a redacted placeholder instead (Voight never stores the placeholder).
+
+## What gets captured
+
+| Codex telemetry | Lands in Voight as |
+|---|---|
+| `codex.conversation_starts` | Session start (model, sandbox and approval policy) |
+| `codex.user_prompt` | The initiating prompt (text only with `log_user_prompt = true`) |
+| `codex.sse_event` token summaries | One LLM call per turn: input / output / cached / reasoning tokens |
+| `codex.tool_result` | Tool call with name, duration, outcome and output snippet |
+| `codex.tool_decision` | Permission decision (denied ones get the DENIED badge) |
+| `codex.api_request` failures | Error events with HTTP status |
+
+Each record carries Codex's `conversation.id`, which becomes the Voight trace id: one session, one trace.
+
+Streaming deltas, websocket chatter and startup phases are deliberately dropped: they would bury the timeline in noise without telling you anything a token summary does not.
+
+## Privacy
+
+Codex attaches your OpenAI account id and email to every telemetry record. Voight's receiver strips `user.email`, `user.account_id` and all `auth.*` attributes before anything touches storage; they are never persisted.
+
+## Troubleshooting
+
+- **Nothing shows up**: make sure you restarted Codex after editing the config, and that the block says `protocol = "json"`.
+- **You already export OTel elsewhere**: Codex supports one exporter per signal. The wizard detects a foreign `[otel]` section and refuses to overwrite it; you choose which backend keeps the logs signal.
+- **`codex exec` (non-interactive) sessions**: log export works; Codex does not emit metrics there, which Voight does not use anyway.
