@@ -1,0 +1,40 @@
+---
+title: Voight MCP
+description: "Connect Claude Code, Cursor, Codex, VS Code or Claude Desktop to Voight through the Model Context Protocol: one server to run your agents, one to read your observability."
+---
+
+Voight ships [Model Context Protocol](https://modelcontextprotocol.io) servers so your coding assistant can work with Voight in plain language instead of through the dashboard. Each server is a small package you add to your client with one line; it talks to `api.voight.xyz` with an API key you create in Voight.
+
+<CardGroup cols={2}>
+  <Card title="MCP for Voight Agents" icon="robot" href="/mcp/agents">
+    Deploy, operate and orchestrate your agents from your assistant. Available now.
+  </Card>
+  <Card title="MCP for Observability" icon="chart-line" href="/mcp/observability">
+    Read traces, issues and alerts from your assistant. Coming soon.
+  </Card>
+</CardGroup>
+
+## How it works
+
+1. You create an **API key** in Voight with the access level the server needs.
+2. You add the server to your client (Claude Code, Cursor, Codex, VS Code, Claude Desktop or Gemini CLI). It runs locally with `npx`; nothing else to install.
+3. Your assistant gets a set of **tools** and uses them when you ask: "list my agents", "deploy one on a GPU", "which of my traces failed today".
+
+The servers are thin. Everything that protects your account (what a key may do, spending limits, what it can delete) is enforced by the Voight API, not by the package on your machine.
+
+## Which clients
+
+| Client | Setup |
+| --- | --- |
+| Claude Code | One `claude mcp add` command |
+| Cursor | A block in `~/.cursor/mcp.json` |
+| Codex CLI | A block in `~/.codex/config.toml` |
+| VS Code | A block in `.vscode/mcp.json`, key stored securely |
+| Claude Desktop | A block in `claude_desktop_config.json` |
+| Gemini CLI | A block in `~/.gemini/settings.json` |
+
+Each server's page has the exact snippet per client.
+
+## Remote connectors
+
+The servers above run on your machine. A hosted version with "Sign in with Voight", so Voight can be added as a connector in claude.ai and ChatGPT without any key, is planned next.

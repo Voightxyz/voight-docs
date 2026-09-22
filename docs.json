@@ -41,6 +41,25 @@
         ]
       },
       {
+        "anchor": "MCP",
+        "icon": "plug",
+        "groups": [
+          {
+            "group": "Voight MCP",
+            "pages": [
+              "mcp/overview"
+            ]
+          },
+          {
+            "group": "Servers",
+            "pages": [
+              "mcp/agents",
+              "mcp/observability"
+            ]
+          }
+        ]
+      },
+      {
         "anchor": "Trust & Security",
         "icon": "shield-check",
         "groups": [

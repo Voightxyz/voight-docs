@@ -1,0 +1,208 @@
+---
+title: MCP for Voight Agents
+description: "Deploy, operate and orchestrate your Voight Agents from Claude Code, Cursor, Codex, VS Code or Claude Desktop with the @voightxyz/agents-mcp server."
+---
+
+`@voightxyz/agents-mcp` gives your coding assistant the tools to work with the agents on your Voight account: list them, talk to one or to ten at once, deploy new ones on Voight Cloud or a Nosana GPU, schedule their work, renew and delete them.
+
+```text
+"Deploy three research agents, give each a topic, and merge what they find."
+"Which of my agents are running, and how much did they use this week?"
+"Schedule a daily 8:00 brief on my research agent."
+"Delete the test agents we deployed this morning."
+```
+
+<Note>
+The package is open source: [github.com/Voightxyz/agents-mcp](https://github.com/Voightxyz/agents-mcp). It talks only to `api.voight.xyz`.
+</Note>
+
+## 1. Create a key
+
+Open [agent.voight.xyz](https://agent.voight.xyz), open the account menu and choose **MCP / API**. Pick the access level and generate the key. It is shown once.
+
+| Access | What the assistant can do | Expires |
+| --- | --- | --- |
+| **Agents: operate** | List agents, read usage and tasks, chat, wake GPUs | Never |
+| **Agents: full** | Everything above, plus deploy, renew, schedule tasks and delete | After 90 days |
+
+Ingest keys (the ones the observability SDK uses) do not work with this server.
+
+## 2. Add the server to your client
+
+<Tabs>
+  <Tab title="Claude Code">
+    ```bash
+    claude mcp add --env VOIGHT_API_KEY=vk_your_key --transport stdio voight-agents -- npx -y @voightxyz/agents-mcp
+    ```
+
+    To share a project config without the secret, commit a `.mcp.json` that reads the key from each person's environment:
+
+    ```json
+    {
+      "mcpServers": {
+        "voight-agents": {
+          "command": "npx",
+          "args": ["-y", "@voightxyz/agents-mcp"],
+          "env": { "VOIGHT_API_KEY": "${VOIGHT_API_KEY}" }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Cursor">
+    `~/.cursor/mcp.json` (or `.cursor/mcp.json` in a project):
+
+    ```json
+    {
+      "mcpServers": {
+        "voight-agents": {
+          "command": "npx",
+          "args": ["-y", "@voightxyz/agents-mcp"],
+          "env": { "VOIGHT_API_KEY": "vk_your_key" }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Codex CLI">
+    `~/.codex/config.toml`:
+
+    ```toml
+    [mcp_servers.voight_agents]
+    command = "npx"
+    args = ["-y", "@voightxyz/agents-mcp"]
+    startup_timeout_sec = 30
+
+    [mcp_servers.voight_agents.env]
+    VOIGHT_API_KEY = "vk_your_key"
+    ```
+  </Tab>
+  <Tab title="VS Code">
+    `.vscode/mcp.json`. VS Code asks for the key once and stores it securely:
+
+    ```json
+    {
+      "inputs": [
+        { "type": "promptString", "id": "voight-api-key", "description": "Voight API key", "password": true }
+      ],
+      "servers": {
+        "voight-agents": {
+          "command": "npx",
+          "args": ["-y", "@voightxyz/agents-mcp"],
+          "env": { "VOIGHT_API_KEY": "${input:voight-api-key}" }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Claude Desktop">
+    `claude_desktop_config.json` (macOS: `~/Library/Application Support/Claude/`, Windows: `%APPDATA%\Claude\`):
+
+    ```json
+    {
+      "mcpServers": {
+        "voight-agents": {
+          "command": "npx",
+          "args": ["-y", "@voightxyz/agents-mcp"],
+          "env": { "VOIGHT_API_KEY": "vk_your_key" }
+        }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Gemini CLI">
+    `~/.gemini/settings.json`. Gemini CLI does not pass variables named like `*KEY*` from your shell, so set the key in the `env` block:
+
+    ```json
+    {
+      "mcpServers": {
+        "voight-agents": {
+          "command": "npx",
+          "args": ["-y", "@voightxyz/agents-mcp"],
+          "env": { "VOIGHT_API_KEY": "vk_your_key" }
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+Then ask your assistant: **"List my Voight agents."**
+
+## Tools
+
+| Tool | What it does | Key | Spends |
+| --- | --- | --- | --- |
+| `list_agents` | Agents on the account: id, state, hosting, model, days left | operate | No |
+| `get_agent` | One agent in detail: channels, expiry, on-chain identity, Nosana job, persona | operate | No |
+| `get_credits` | Credit balance, plan and the price of one deploy | operate | No |
+| `get_agent_usage` | Turns, tokens and cost for one agent or the whole account | operate | No |
+| `list_tasks` | Tasks of an agent, with the result of the last run | operate | No |
+| `list_gpu_markets` | GPU markets with hourly price and live availability | operate | No |
+| `chat_with_agent` | Sends one message and waits for the reply | operate | Inference |
+| `get_reply` | Collects the reply of a turn that was still running | operate | No |
+| `message_agents` | Sends instructions to up to 10 agents at once | operate | Inference |
+| `get_replies` | Collects several pending replies in one call | operate | No |
+| `wake_agent` | Starts the GPU of a stopped Nosana agent | operate | Can bill a GPU hour |
+| `wait_for_agent` | Waits for a starting agent, and says when to stop waiting | operate | No |
+| `quote_agent_deploy` | What a deploy would cost, and whether the account may do it | full | No |
+| `deploy_agent` | Deploys an agent on Voight Cloud or a Nosana GPU | full | **Yes** |
+| `quote_agent_renewal` | What a renewal would cost, and whether it is due | full | No |
+| `renew_agent` | Extends hosting by another period | full | **Yes** |
+| `create_task`, `update_task`, `delete_task` | Work an agent runs on its own: once, daily or weekly | full | Each run is a normal turn |
+| `delete_agent` | Permanently deletes an agent | full | No |
+
+Start the server with `--read-only` to expose only the tools that read.
+
+## Deploying from your assistant
+
+Spending always takes two tools, so your client asks for permission at the moment credits move:
+
+1. `quote_agent_deploy` answers what it costs, your balance, and whether the account may deploy it. It spends nothing.
+2. `deploy_agent` repeats the quoted amounts. If the real price is higher, the deploy is refused and nothing is charged.
+3. `wait_for_agent` follows the start (about a minute on Voight Cloud, about four on a GPU) and tells the assistant when to stop waiting.
+
+**Every deploy and renewal made through the MCP is charged** at the regular agent price, on every account. Free and trial agents are claimed on the web. Asking twice for the same deploy returns the agent that is already starting instead of a second one and a second charge.
+
+GPU hosting on Nosana is invite-only for now: deploying on a GPU works for invited accounts; everyone can deploy on Voight Cloud. See [GPU hosting](/agents/gpu-hosting).
+
+## Limits
+
+Per account, across all its keys, enforced by the API:
+
+| Limit | Value |
+| --- | --- |
+| Deploys | 10 per 24 hours |
+| Renewals | 10 per 24 hours, and only in the 7 days before an agent expires |
+| Agent deletes | 10 per 24 hours |
+| Task creates, edits and deletes | 30 per 24 hours |
+| Live agents deployed through keys | 15, of which 3 on GPU |
+| Tasks per agent | 50 |
+
+## Orchestrating several agents
+
+`message_agents` sends one instruction to many agents, or a different one to each, and waits once for all of them. Agents still working come back as `running` with a `turn_ref`; `get_replies` collects them. Nothing is sent to an agent that is busy or not ready, so a message is never queued behind another or lost.
+
+## Tasks
+
+A task is an instruction the agent runs on its own: once, every day or every week (UTC). Each run is a normal agent turn.
+
+- On an agent connected to **GitHub, LinkedIn or X**, a task created from the MCP is saved **paused**, and a person enables it in the dashboard. A key can pause such an agent's tasks, and edit a task it created that never ran, but it can never enable one or change one a person approved.
+- **Revoking a key does not stop the tasks it scheduled.** Pause or delete them from the MCP or from the dashboard.
+
+## Deleting
+
+`delete_agent` is permanent: the agent, its memory and its tasks are gone, and a used period is not refunded. It needs the agent's exact name, and it **only works on agents that were deployed with an API key**. Agents built in the dashboard cannot be deleted from any MCP session. A GPU deploy that has not started yet is refunded when deleted; a cloud agent that is still starting cannot be deleted until it is up.
+
+## Security and privacy
+
+- **Scoped keys.** An operate key cannot deploy, renew, schedule or delete. A full key can, expires after 90 days, and is bounded by the limits above. Neither can touch billing, top up, or manage API keys. Revoke a key at any time in **MCP / API**.
+- **The rules live on the server.** Charging, limits, duplicate detection, what a key may delete and the task rules are enforced by the Voight API. A model can repeat any confirmation it is asked for, so nothing in the package is a security boundary.
+- **The key goes to one place.** The package only sends requests to `https://api.voight.xyz`; any other endpoint is refused.
+- **Stored text is fenced.** Agent replies, task results, personas and task instructions come back inside a block marked as untrusted content, and the model is told to treat them as data.
+- **What leaves your machine.** The messages you send to an agent go to Voight, as they would from the dashboard. What comes back is handed to your MCP client and therefore to the model provider behind it. Account email and wallet are never returned.
+
+## Known limits
+
+- Chat turns in progress are kept in the memory of the local server. If your client restarts it while an agent is working, the pending reply is lost (the agent still finishes).
+- Hourly tasks, editing an agent's persona or model, retrying a failed deploy, connectors and attachments are not exposed yet.

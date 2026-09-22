@@ -1,0 +1,34 @@
+---
+title: MCP for Observability
+description: "Read your Voight traces, issues, alerts and AI Apps metrics from your coding assistant. Coming soon."
+---
+
+<Note>
+**Coming soon.** The observability server is being built after the [Agents server](/mcp/agents). This page describes what it will do so you know what to expect; nothing here is installable yet.
+</Note>
+
+`@voightxyz/mcp` will let your assistant read what Voight observes about your AI apps and agents, in plain language:
+
+```text
+"Which of my traces failed in the last hour, and why?"
+"Show me the open issues on the checkout agent."
+"What did the last alert on production say?"
+```
+
+## Planned tools
+
+| Tool | What it does |
+| --- | --- |
+| `get_account` | Plan and usage, without email or wallet |
+| `list_agents`, `get_agent` | The agents and apps Voight observes |
+| `list_traces`, `get_trace` | Recent traces, and one trace as a summary, a timeline or its errors |
+| `list_issues`, `get_issue` | The cross-agent issue queue and one issue with its diagnosis |
+| `list_alerts` | Recent alerts |
+| `explain_trace` | Voight's explanation of a trace, cached when it already exists |
+| AI Apps aggregates | Overview, models and tools, as numbers |
+
+Reading will be free. AI diagnosis and explanations follow the plan's quota.
+
+## Keys
+
+It will use a separate access level, **Observability: read**, created in the Voight dashboard Settings. Ingest keys will keep working only for sending events, as today.
