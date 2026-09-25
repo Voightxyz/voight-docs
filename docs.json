@@ -11,77 +11,7 @@
   "navigation": {
     "anchors": [
       {
-        "anchor": "Agents",
-        "icon": "robot",
-        "groups": [
-          {
-            "group": "Voight Agents",
-            "pages": [
-              "agents/overview",
-              "agents/quickstart"
-            ]
-          },
-          {
-            "group": "How it works",
-            "pages": [
-              "agents/frameworks",
-              "agents/templates",
-              "agents/models",
-              "agents/gpu-hosting",
-              "agents/channels",
-              "agents/txline"
-            ]
-          },
-          {
-            "group": "Plans",
-            "pages": [
-              "agents/pricing"
-            ]
-          }
-        ]
-      },
-      {
-        "anchor": "MCP",
-        "icon": "plug",
-        "groups": [
-          {
-            "group": "Voight MCP",
-            "pages": [
-              "mcp/overview"
-            ]
-          },
-          {
-            "group": "Servers",
-            "pages": [
-              "mcp/agents",
-              "mcp/observability"
-            ]
-          }
-        ]
-      },
-      {
-        "anchor": "Trust & Security",
-        "icon": "shield-check",
-        "groups": [
-          {
-            "group": "Overview",
-            "pages": [
-              "trust/overview"
-            ]
-          },
-          {
-            "group": "Compliance frameworks",
-            "pages": [
-              "trust/gdpr",
-              "trust/owasp-llm",
-              "trust/nist-ai-rmf",
-              "trust/soc2-readiness"
-            ]
-          }
-        ]
-      },
-      {
-        "anchor": "Documentation",
+        "anchor": "Observability",
         "icon": "book-open",
         "groups": [
           {
@@ -155,6 +85,76 @@
             ]
           }
         ]
+      },
+      {
+        "anchor": "Trust & Security",
+        "icon": "shield-check",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "trust/overview"
+            ]
+          },
+          {
+            "group": "Compliance frameworks",
+            "pages": [
+              "trust/gdpr",
+              "trust/owasp-llm",
+              "trust/nist-ai-rmf",
+              "trust/soc2-readiness"
+            ]
+          }
+        ]
+      },
+      {
+        "anchor": "Agents",
+        "icon": "robot",
+        "groups": [
+          {
+            "group": "Voight Agents",
+            "pages": [
+              "agents/overview",
+              "agents/quickstart"
+            ]
+          },
+          {
+            "group": "How it works",
+            "pages": [
+              "agents/frameworks",
+              "agents/templates",
+              "agents/models",
+              "agents/gpu-hosting",
+              "agents/channels",
+              "agents/txline"
+            ]
+          },
+          {
+            "group": "Plans",
+            "pages": [
+              "agents/pricing"
+            ]
+          }
+        ]
+      },
+      {
+        "anchor": "MCP",
+        "icon": "plug",
+        "groups": [
+          {
+            "group": "Voight MCP",
+            "pages": [
+              "mcp/overview"
+            ]
+          },
+          {
+            "group": "Servers",
+            "pages": [
+              "mcp/agents",
+              "mcp/observability"
+            ]
+          }
+        ]
       }
     ],
     "global": {
@@ -192,8 +192,8 @@
         "href": "https://voight.xyz/dashboard"
       },
       {
-        "label": "Explorer",
-        "href": "https://voight.xyz/explore"
+        "label": "Voight Agents",
+        "href": "https://agent.voight.xyz"
       }
     ],
     "primary": {
