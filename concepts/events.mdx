@@ -14,7 +14,7 @@ The `type` field is one of:
 | `decision` | Reasoning step, user prompt, agent finishing a turn. Anything that isn't a tool execution or transaction. |
 | `action` | A tool call was attempted or completed (PreToolUse / PostToolUse from Claude Code). |
 | `tool` | Same as `action` — legacy label, library mode often uses this. |
-| `tx` | An on-chain transaction was signed and submitted. |
+| `tx` | A transaction was signed and submitted, for agents that move funds. |
 | `reasoning` | Free-form thinking trace, often paired with tool calls. |
 | `error` | A tool failed, or the agent crashed. |
 
@@ -32,7 +32,7 @@ Every event includes:
   reasoning?: string          // human-readable description
   toolExecuted?: string       // name of the tool, if applicable
   toolsConsidered?: string[]  // alternatives the agent rejected
-  transaction?: string        // Solana tx signature, if applicable
+  transaction?: string        // transaction signature or reference, if applicable
   amount?: { token, value }   // payment / swap amount
   outcome?: 'pending' | 'success' | 'failed'
   durationMs?: number         // for PostToolUse events

@@ -29,7 +29,7 @@ Content-Type: application/json
   "reasoning": "string (optional)",
   "toolsConsidered": ["string"],
   "toolExecuted": "string (optional)",
-  "transaction": "string (optional, Solana signature)",
+  "transaction": "string (optional, transaction signature or reference)",
   "amount": { "token": "string", "value": "number" },
   "outcome": "pending | success | failed (optional)",
   "durationMs": "number (optional)",
@@ -48,7 +48,7 @@ Content-Type: application/json
 | `reasoning` | string | No | Free-form human-readable trace. |
 | `toolsConsidered` | string[] | No | Alternative tools the agent rejected. |
 | `toolExecuted` | string | No | Name of the tool that ran. |
-| `transaction` | string or null | No | Solana tx signature. |
+| `transaction` | string or null | No | Transaction signature or reference, for agents that move funds. |
 | `amount` | object | No | `{ token, value }`. For swaps / transfers / payments. |
 | `outcome` | enum | No | One of `pending`, `success`, `failed`. |
 | `durationMs` | non-negative integer | No | Tool runtime. |
@@ -140,7 +140,7 @@ When an event is accepted, the server also:
 - Updates `agent.lastSeenAt` to now (fire-and-forget)
 - Lazy-backfills `agent.framework` if the event has `metadata.tool` and the field was null
 - May trigger anomaly evaluation if this event crosses an alert threshold (next scheduler tick at most 5 minutes later)
-- Stores a `contentHash` (SHA-256 of the normalised payload) for future on-chain anchoring (mint flow ships in v1.0)
+- Stores a `contentHash` (SHA-256 of the normalised payload): the basis of the tamper-evident audit trail
 
 ## Pre-bound vs free API keys
 

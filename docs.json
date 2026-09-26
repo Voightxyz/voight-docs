@@ -188,6 +188,10 @@
   "navbar": {
     "links": [
       {
+        "label": "Company",
+        "href": "https://voight.xyz/company"
+      },
+      {
         "label": "Dashboard",
         "href": "https://voight.xyz/dashboard"
       },
