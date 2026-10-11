@@ -64,3 +64,8 @@ Codex attaches your OpenAI account id and email to every telemetry record. Voigh
 - **Nothing shows up**: make sure you restarted Codex after editing the config, and that the block says `protocol = "json"`.
 - **You already export OTel elsewhere**: Codex supports one exporter per signal. The wizard detects a foreign `[otel]` section and refuses to overwrite it; you choose which backend keeps the logs signal.
 - **`codex exec` (non-interactive) sessions**: log export works; Codex does not emit metrics there, which Voight does not use anyway.
+
+## Next
+
+- [Codex observability guide](https://voight.xyz/guides/codex-observability): reading a Codex session as a trace
+- [Smart Traces](/concepts/traces): how traces are grouped and summarized

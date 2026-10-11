@@ -187,6 +187,10 @@
   "navbar": {
     "links": [
       {
+        "label": "Guides",
+        "href": "https://voight.xyz/guides"
+      },
+      {
         "label": "Company",
         "href": "https://voight.xyz/company"
       },
