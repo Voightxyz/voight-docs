@@ -125,8 +125,7 @@
               "agents/templates",
               "agents/models",
               "agents/gpu-hosting",
-              "agents/channels",
-              "agents/txline"
+              "agents/channels"
             ]
           },
           {
@@ -223,5 +222,11 @@
     "body": {
       "family": "Inter"
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/agents/txline",
+      "destination": "/agents/templates"
+    }
+  ]
 }
