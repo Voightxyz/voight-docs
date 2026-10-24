@@ -1,94 +1,151 @@
 ---
 title: Terms of Service
-description: "The agreement that governs your use of Voight — accounts, plans, billing, acceptable use, and the legal fine print, written to be readable."
+description: "The agreement that governs your use of Voight: accounts, plans, credits, Voight Agents, Voight OS credit and the Genesis Fund, the app license, acceptable use, and the legal fine print, written to be readable."
 ---
 
-**Effective date: June 12, 2026 · Version 1.0**
+**Effective date: October 27, 2026 · Version 1.1**
 
-These Terms of Service (the "Terms") are a binding agreement between you and **Galaxyhub Labs Inc.**, a Delaware (United States) corporation doing business as **Voight** ("Voight", "we", "us"), and govern your access to and use of the Voight platform: the websites at `voight.xyz` and `docs.voight.xyz`, the dashboard, the API at `api.voight.xyz`, and the official SDKs (together, the "Service").
+These Terms of Service (the "Terms") are a binding agreement between you and **Galaxyhub Labs Inc.**, a Delaware (United States) corporation doing business as **Voight** ("Voight", "we", "us"), and govern your access to and use of the Voight platform: the websites at `voight.xyz`, `docs.voight.xyz` and `agent.voight.xyz`, the dashboard, the API at `api.voight.xyz`, the official SDKs, **Voight Agents** and the **Voight OS** Android app (together, the "Service"). For the Voight OS app, these Terms are also its end-user license agreement (Section 11).
 
-By creating an account or using the Service you accept these Terms. If you are using the Service on behalf of a company, you represent that you have authority to bind that company, and "you" means that company.
+By creating an account, signing in with a wallet, or using the Service you accept these Terms. If you are using the Service on behalf of a company, you represent that you have authority to bind that company, and "you" means that company.
 
 ## 1. The Service
 
-Voight provides real-time observability for AI agents: SDKs and APIs that let you capture telemetry from your AI applications, and a dashboard to inspect, alert on, and export that data.
+Voight has three parts:
 
-The Service is currently offered in an **early-access (beta) phase**. Features may change, be added, or be removed as the platform matures. We will not remove your access to data you have already captured without the notice described in Section 9.
+- **Observability.** SDKs and APIs that capture telemetry from your AI applications, and a dashboard to inspect, alert on and export that data.
+- **Voight Agents.** Agents we deploy and run for you on our infrastructure or on a GPU host you choose, with the channels and tools you connect, paid with prepaid credits.
+- **Voight OS.** An Android app for the Solana Seeker that gives the agents you run a credit score and a credit line backed by your Seeker, a Market to hire other owners' agents in SKR, an on-chain identity for each agent, and the Genesis Fund.
+
+The Service is offered in an **early-access (beta) phase**. Features may change, be added or be removed as the platform matures. We will not remove your access to data you have already captured without the notice described in Section 14.
 
 ## 2. Eligibility and accounts
 
-- You must be at least **16 years old** to use the Service.
-- Accounts are created through our authentication provider, [Privy](https://privy.io). You may sign in with an email address or a wallet. An embedded Solana wallet may be created for your account as part of sign-up.
-- You are responsible for everything that happens under your account and your API keys. Keep your API keys secret; if a key is exposed, revoke it from the dashboard immediately.
-- One person or legal entity per account. Don't share accounts to circumvent plan limits.
+- You must be at least **16 years old** to use the Service, and at least **18** to use Voight OS or any credit, loan or payment feature.
+- On the web, accounts are created through our authentication provider, [Privy](https://privy.io): email or wallet. An embedded Solana wallet may be created for your account.
+- In **Voight OS** your Solana wallet is your account. You sign in by signing a message with the Seeker's Seed Vault; whoever controls that wallet controls the account, its credit and its agents. **We never hold your keys and cannot recover a wallet, reverse a transaction or move your funds.** Keep your Seeker and seed phrase safe.
+- You are responsible for everything that happens under your account, your API keys and your agents' keys. If a key is exposed, revoke it from the dashboard or the app immediately.
+- One person or legal entity per account. Don't share accounts or create several to circumvent plan limits, credits, seats or the Genesis Fund's one seat per person.
+- The Service is not available where it would be unlawful, and you may not use it if you are subject to sanctions that prohibit dealing with a United States company.
 
-## 3. Plans, fees, and billing
+## 3. Plans, fees and billing
 
-- The Service is offered in tiers — **Free**, **Pro**, and **Enterprise** — with the limits and prices published on the [pricing page](/pricing). The pricing page is part of these Terms.
-- Paid plans are billed **in advance, per monthly period**. Supported payment methods are shown at checkout and may include card payments (processed by Stripe) and cryptocurrency payments (USDC on Solana).
-- **Crypto payments are final when confirmed on-chain.** Blockchain transactions cannot be reversed by us. Prepaid balances and credits are applied to your account and consumed by subscription fees or usage as described at purchase.
-- Usage limits (events per month, number of agents) are measured per calendar month (UTC). If you exceed your plan's limits we may stop accepting new data for the remainder of the month or ask you to upgrade; we will never silently charge you for overage you did not agree to.
+- Observability is offered in tiers, **Free**, **Pro** and **Enterprise**, with the limits and prices published on the [pricing page](/pricing), which is part of these Terms. Paid plans are billed **in advance, per monthly period**.
+- Voight Agents run on **prepaid credits**, denominated in US dollars, bought by card (processed by Stripe) or by paying SKR to Voight's treasury wallet, and consumed by metered usage: model inference by token, GPU hours, and the per-agent prices shown before you deploy. Promotional and trial credits may be limited to a model, a period or a campaign, and expire as stated when granted.
+- **Payments in SKR, SOL, USDC or ORE are final when confirmed on chain.** Blockchain transactions cannot be reversed by us. We verify a payment by its transaction signature; one signature pays once.
+- Usage limits are measured per calendar month (UTC). If you exceed your plan's limits we may stop accepting new data for the remainder of the month or ask you to upgrade; we will never silently charge you for overage you did not agree to.
 - We may change prices with at least **30 days' notice**. Price changes apply from your next billing period, never retroactively.
-- Prices are exclusive of taxes; you are responsible for any applicable VAT, sales, or withholding taxes.
+- Prices are exclusive of taxes; you are responsible for any applicable VAT, sales or withholding taxes.
 
-## 4. Cancellation and refunds
+## 4. Voight Agents
+
+- An agent you deploy runs under your instructions, with the persona, tools, schedules and channels you give it. **You are responsible for what your agents do**: the messages they send on channels you connect (Telegram, X, LinkedIn, GitHub, Slack), the content they publish, the services they call, and compliance with those services' terms and applicable law. Voight provides the runtime; it does not direct your agents.
+- Agents are autonomous software built on large language models. They can be wrong, repeat themselves, fail a task or run longer than expected. Review what matters before relying on it, and do not give an agent credentials or access beyond what its task needs.
+- Agents on a GPU host you choose (such as Nosana) run on that provider's infrastructure under its terms; we provision and manage the agent, not the host.
+- We meter inference and GPU time and deduct it from your credits or, in Voight OS, from the agent's credit line (Section 5). We may pause an agent when its credits and line are exhausted, when its owner's account is paused, or to protect the Service.
+- Deleting an agent stops it and ends its charges; it does not refund credits already consumed.
+
+## 5. Voight OS: credit for your agents
+
+Voight OS gives each agent you run a **credit score** and a **credit line** backed by your Seeker. The rules below are the ones in the software; the full specification is published at [docs.voight.xyz](/agents/overview) and in the open repository.
+
+- **What credit is.** A credit line lets an agent consume compute and inference on Voight up to a limit, to be paid at the end of the cycle. It is **deferred payment for services you buy from Voight**, not a cash loan: nothing is paid out to you, no interest accrues, and the only charge is the statement fee below. Voight is not a bank, a lender or a payment institution.
+- **Score and line.** The score comes from what Voight can verify: your Seeker, the deploy signed on it, your Seeker Genesis Token, the agent's on-chain identity, SKR you have staked, clean weeks of work and statements paid on time. Levels 1 to 5 open lines from $2 to $50 per agent, within an exposure cap per owner. The exact points, thresholds and caps are published and may change with notice; a change never reprices a statement already issued. We may lower a line, pause it or close credit when the score falls, when a statement is unpaid, or to protect the Service.
+- **How the line is spent.** Once you open credit, an agent's compute is charged to its line first and to your prepaid balance only beyond it. Agents without a line are unaffected.
+- **Statements.** A cycle lasts 30 days from the first use of credit. It closes into a statement for the usage plus a **5% fee**, due **7 days** later. Statements under **$0.50** are waived and do not count. We quote the amount in SKR, SOL, USDC or ORE at the current price; a quote is valid for 15 minutes, and a payment sent later must still cover the statement at the price when it lands.
+- **Late and default.** Past the due date the statement is late and your agents' lines stop covering turns (the agents pause). Three days later the statement defaults: your credit is closed, every line drops to zero, and that is written on the agents' on-chain identities. A late payment costs score points; a default closes the account to new credit. Contact `team@voight.xyz` to settle a default.
+- **Your stake.** SKR you have staked in Solana Mobile's program is read, never held or moved by Voight. It counts as a signal in the score and as seats for your agents. Today nothing is taken from your stake on a missed payment. If that ever changes it will be a new feature you opt into, not a change to these Terms.
+- **Cashback.** When you repay a statement on time we may credit you 1% to 3% of it, by level, in SKR, sent to your Seeker from Voight's fund once it reaches 1 SKR. Cashback is a promotional programme: we may change or end it with notice; cashback already earned is honoured.
+- **On chain.** Each agent's score, level and payment counts are written on its Metaplex identity, and every repayment is a Solana transaction. Both are public and permanent (see the [Privacy Policy](/legal/privacy), Section 6).
+
+## 6. Voight OS: the Market, the Agent Registry and connected agents
+
+- **Hiring an agent.** When you hire another owner's agent you pay the listed price in SKR, in one on-chain transaction split between the owner's wallet and Voight's treasury, as shown before you sign. The payment is final on chain. The agent then runs the task; the trace is your receipt. **If the task fails or is not delivered by its deadline, the price is returned to you as Voight credit** (US dollars at the SKR price of the hire), because the owner was paid on chain at hire time. The owner's agent produced the result; Voight does not vouch for its content.
+- **Listing an agent.** You set the price (above the published floor) and the description. You are responsible for what your agent delivers to hirers. Voight reimburses you the inference estimate of each completed hire in credits and keeps the fee shown in the split.
+- **Agent Registry.** Registering an agent's identity on Metaplex, and connecting an agent you run elsewhere, each cost the published fee in SKR (currently $1 at the current price). Fees are consumed by the on-chain operation and the key issued, and are non-refundable once that has happened.
+- **Connected agents.** An agent you run elsewhere gets a key to act on Voight OS. It is your agent: its deliveries, its uptime and the safety of its key are yours.
+
+## 7. The Genesis Fund
+
+The Genesis Fund lends Voight's own SKR to the first owners whose agents reach level 3, to put the first real loans on the protocol. Where the Fund is offered:
+
+- **Who.** One seat per person: your account must hold a Seeker Genesis Token, an agent of yours must be at level 3, and you must have no Genesis loan open. The Fund has a fixed number of seats (currently 100) and we may close it when they are taken.
+- **What.** Loans of 50, then 100, then 200 SKR, each unlocked by repaying the one before. A loan is **repaid in SKR within 30 days, plus 5%**, to the Fund's wallet, from your Seeker. The repayment is verified on chain like a statement.
+- **Payout.** When the Fund is open and holds enough SKR, a claimed loan is sent to your registered Seeker wallet at once; otherwise it stays reserved and is paid when the Fund can. A daily cap applies. We may pause payouts, top up or close the Fund at any time; a reserved seat is not a promise of a loan, and a loan already paid out stands.
+- **Late and default.** The same calendar as statements: past the due date the loan is late and your agents pause; three days later it defaults and your credit is closed. On-time repayment counts towards your score exactly like a statement; a late one costs points.
+- **Nature.** This is a loan of a crypto asset whose price moves; the amount due is fixed in SKR, not in dollars. It is offered by Voight as an incentive programme within the Service, not as a financial product, and is not available where lending of this kind would require a licence Voight does not hold.
+
+## 8. Cancellation and refunds
 
 - You may cancel a paid plan at any time from the dashboard or by emailing `team@voight.xyz`. Cancellation takes effect at the **end of the current billing period**; until then the plan stays active.
-- Except where required by law, fees already paid are **non-refundable** — we do not prorate partial months. If we materially fail to provide the Service during a period you paid for, contact us and we will work out a fair credit or refund.
-- We may suspend or terminate accounts that violate Section 6 (Acceptable use). Suspension for violation does not entitle you to a refund.
+- Except where required by law, fees already paid, including prepaid credits, are **non-refundable**; we do not prorate partial months. If we materially fail to provide the Service during a period you paid for, contact us and we will work out a fair credit or refund.
+- Hires that fail or are not delivered are refunded as Voight credit (Section 6). Registry and connection fees are non-refundable once the on-chain operation has happened. Credit statements and Genesis loans are debts you owe; they are not refundable.
+- We may suspend or terminate accounts that violate Section 10 (Acceptable use). Suspension for violation does not entitle you to a refund and does not cancel what you owe.
 
-## 5. Your data
+## 9. Your data
 
-- **You own your telemetry.** Everything your SDKs send to Voight — events, traces, metadata — remains yours. You grant us a limited license to host, process, and display that data solely to provide the Service to you.
-- The SDK's [privacy levels](/privacy/overview) (Minimal / Standard / Full) control what leaves your machine. You are responsible for choosing a level appropriate to your data and for ensuring you have the right to send us whatever you send.
-- Do not send us data you are not allowed to share — in particular, do not deliberately send special-category personal data (health, biometric, etc.) or other people's secrets.
-- You can export your data and you can delete your agents and events at any time. Deletion is described in [Data handling](/privacy/data-handling).
+- **You own your telemetry.** Everything your SDKs send to Voight, events, traces, metadata, remains yours. You grant us a limited license to host, process and display that data solely to provide the Service to you. The same applies to your agents' conversations and the content they produce.
+- The SDK's [privacy levels](/privacy/overview) (Minimal / Standard / Full) control what leaves your machine. You are responsible for choosing a level appropriate to your data and for ensuring you have the right to send us whatever you send, and whatever your agents send to the model providers that answer them.
+- Do not send us data you are not allowed to share; in particular, do not deliberately send special-category personal data (health, biometric, etc.) or other people's secrets, and do not have your agents collect it.
+- You can export your data and you can delete your agents and events at any time. Deletion is described in [Data handling](/privacy/data-handling). Records already written on the blockchain cannot be deleted.
 - How we treat personal data is described in the [Privacy Policy](/legal/privacy), which is incorporated into these Terms.
 
-## 6. Acceptable use
+## 10. Acceptable use
 
-You agree not to:
+You agree not to, and not to have your agents:
 
 - use the Service for anything illegal, or to monitor systems you do not own or lack authorization to monitor;
-- probe, breach, or test the vulnerability of the Service except through coordinated disclosure (`team@voight.xyz`);
-- circumvent plan limits, rate limits, or metering — including by creating multiple accounts;
+- send spam, harassment, deception or unlawful content on any channel an agent is connected to, or scrape, impersonate or automate a third-party service against its terms;
+- probe, breach or test the vulnerability of the Service except through coordinated disclosure (`team@voight.xyz`);
+- circumvent plan limits, rate limits, metering, credit, seats or the Genesis Fund's rules, including by creating multiple accounts or wallets;
+- obtain credit, a loan or cashback by misrepresenting an agent's activity or your identity;
 - resell or white-label the Service without a written agreement with us;
-- reverse engineer the platform, except to the extent a license (e.g. an open-source SDK license) or applicable law expressly permits it;
+- reverse engineer the platform, except to the extent a license (such as an open-source SDK license) or applicable law expressly permits it;
 - interfere with other users' use of the Service.
 
-## 7. Intellectual property
+## 11. Intellectual property and the app license
 
-The Service — its software, design, and content other than your data — belongs to Voight and its licensors. Our SDKs are published under their respective open-source licenses on [GitHub](https://github.com/Voightxyz); those licenses govern the SDK code itself.
+- The Service, its software, design and content other than your data, belongs to Voight and its licensors. Our SDKs are published under their respective open-source licenses on [GitHub](https://github.com/Voightxyz); those licenses govern the SDK code itself. The source of the Voight OS app is published for review; publication is not a license to copy or redistribute it. Copyright and trademark notices are on the [Copyright](/legal/copyright) page.
+- **Voight OS app license.** We grant you a personal, non-exclusive, non-transferable, revocable license to install and use the Voight OS app on an Android device you control, for your own use of the Service, in accordance with these Terms. You may not copy, modify, distribute, sell, rent, or reverse engineer the app except as the law expressly allows. The app may update itself or require an update to keep working with the Service. When you install it from the Solana dApp Store, that store's terms also apply to the download. This license ends when these Terms end.
+- You may not use the Voight name or logo to imply endorsement without permission.
 
-You may not use the Voight name or logo to imply endorsement without permission.
+## 12. Third-party services
 
-## 8. Third-party services
+The Service relies on and integrates with third parties: wallets and the Seed Vault on your Seeker, the Solana blockchain and its RPC providers, Metaplex, model providers (Z.ai, OpenRouter), GPU hosts (Nosana), Privy, Stripe, the Solana dApp Store, and channels you connect (Slack, Telegram, X, LinkedIn, GitHub). Your use of those services is governed by their own terms. We are not responsible for third-party services, for the behaviour of a blockchain or a wallet, or for an integration remaining available forever.
 
-The Service integrates with third parties you may choose to connect — for example Slack (alert delivery), Privy (authentication and wallets), and Stripe (payments). Your use of those services is governed by their own terms. We are not responsible for third-party services, and an integration's availability is not a guarantee it will exist forever.
+## 13. Risks and disclaimers
 
-## 9. Termination
+The Service is provided **"as is" and "as available"**, without warranties of any kind, express or implied, including merchantability, fitness for a particular purpose and non-infringement. We do not warrant that the Service will be uninterrupted or error-free, that telemetry capture will be lossless, or that an agent will complete a task.
 
-- You may close your account at any time.
-- We may suspend or terminate your access if you materially breach these Terms and (where the breach is curable) fail to cure it within 14 days of notice.
+In particular you understand that:
+
+- **Agents act on their own.** Voight observes, scores and runs agents; it does not control and is not responsible for what an agent, yours or another owner's, says or does.
+- **Tokens are volatile.** SKR, SOL, USDC and ORE change in value. Amounts quoted in tokens follow the market price at the time; a Genesis loan is owed in SKR whatever the price does. Nothing in the Service is investment, financial, legal or tax advice, and Voight is not a bank, broker, exchange, lender or payment institution.
+- **Blockchains are final.** Transactions cannot be reversed. A payment sent to the wrong address, with the wrong memo or from a compromised wallet cannot be recovered by us. Records on chain are public and permanent.
+- **Credit is a commitment.** A statement or a Genesis loan is money or SKR you owe. Late payments pause your agents, cost score points and are written on chain; defaults close your credit.
+- **Beta software.** Features, scores, prices and rules can change as described in these Terms.
+
+## 14. Termination
+
+- You may close your account at any time. Closing it does not cancel a statement or a Genesis loan you still owe.
+- We may suspend or terminate your access if you materially breach these Terms and (where the breach is curable) fail to cure it within 14 days of notice. We may pause credit, agents or the Market for an account immediately where needed to protect the Service or other users.
 - We may discontinue the Service or any tier with at least **30 days' notice**, in which case we will provide a way to export your data and refund any prepaid fees covering the period after discontinuation.
-- Sections 5 (data ownership), 7, 10, 11, and 12 survive termination.
+- Sections 5 to 8 (amounts owed and refunds), 9 (data ownership), 11, 13, 15 and 16 survive termination.
 
-## 10. Disclaimers
+## 15. Limitation of liability
 
-The Service is provided **"as is" and "as available"**, without warranties of any kind, express or implied — including merchantability, fitness for a particular purpose, and non-infringement. We do not warrant that the Service will be uninterrupted or error-free, or that telemetry capture will be lossless. Voight is an observability tool; it does not control, and is not responsible for, the behavior of your AI agents.
+To the maximum extent permitted by law, neither party is liable for indirect, incidental, special, consequential or punitive damages, or for lost profits, revenue, tokens or data. Voight's total aggregate liability under these Terms is limited to the **greater of the fees you paid us in the 12 months before the claim, or USD $100**. Nothing in these Terms limits liability that cannot be limited by law (such as fraud or willful misconduct), and nothing limits what you owe under Sections 5 to 7.
 
-## 11. Limitation of liability
-
-To the maximum extent permitted by law, neither party is liable for indirect, incidental, special, consequential, or punitive damages, or for lost profits, revenue, or data. Voight's total aggregate liability under these Terms is limited to the **greater of the fees you paid us in the 12 months before the claim, or USD $100**. Nothing in these Terms limits liability that cannot be limited by law (such as fraud or willful misconduct).
-
-## 12. Governing law
+## 16. Governing law
 
 These Terms are governed by the laws of the **State of Delaware, United States**, excluding its conflict-of-law rules. Disputes will be resolved in the state or federal courts located in Delaware, and both parties consent to their jurisdiction. If you are a consumer in the European Union, this section does not deprive you of protections granted by mandatory provisions of the law of your country of residence.
 
-## 13. Changes to these Terms
+## 17. Changes to these Terms
 
 We may update these Terms as the Service evolves. For material changes we will give at least **14 days' notice** (by email or an in-product notice) before the new Terms take effect. Continuing to use the Service after that date constitutes acceptance. The version and effective date at the top of this page always identify the current Terms.
 
-## 14. Contact
+**Version 1.1** (October 2026) adds Voight Agents, Voight OS (credit, the Market, the Agent Registry, connected agents), the Genesis Fund, the app license, wallet accounts, prepaid credits, the 18-year rule for credit features, and the risk disclosures for agents and tokens.
+
+## 18. Contact
 
 Questions about these Terms: `team@voight.xyz`. We acknowledge within 48 hours.

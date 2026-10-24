@@ -1,15 +1,15 @@
 ---
 title: Privacy Policy
-description: "What personal data Voight collects, why, where it lives, who can see it, and the rights you have over it."
+description: "What personal data Voight collects, why, where it lives, who can see it, what is written on the blockchain, and the rights you have over it."
 ---
 
-**Effective date: June 12, 2026 · Version 1.0**
+**Effective date: October 27, 2026 · Version 1.1**
 
-This Privacy Policy explains how **Galaxyhub Labs Inc.**, doing business as **Voight** ("Voight", "we", "us"), handles personal data when you use the Voight platform — the websites at `voight.xyz` and `docs.voight.xyz`, the dashboard, the API at `api.voight.xyz`, and the official SDKs (together, the "Service").
+This Privacy Policy explains how **Galaxyhub Labs Inc.**, doing business as **Voight** ("Voight", "we", "us"), handles personal data when you use the Voight platform: the websites at `voight.xyz`, `docs.voight.xyz` and `agent.voight.xyz`, the dashboard, the API at `api.voight.xyz`, the official SDKs, **Voight Agents** (agents we run for you) and **Voight OS**, the Android app for the Solana Seeker (together, the "Service").
 
-The short version: we collect the minimum needed to run an observability service, we never sell personal data, we never use it for advertising, and the SDK is designed so that *you* decide what telemetry leaves your machine in the first place.
+The short version: we collect the minimum needed to run the Service, we never sell personal data, we never use it for advertising, the SDK is designed so that *you* decide what telemetry leaves your machine, and in Voight OS your wallet is your account. Some of what Voight OS does is written on the Solana blockchain, which is public and permanent; Section 6 says exactly what.
 
-This page is the policy. The deeper technical detail lives in our published [GDPR compliance documentation](/trust/gdpr) (35 pages, versioned), [Privacy overview](/privacy/overview), and [Data handling](/privacy/data-handling) — all of which this policy incorporates by reference.
+This page is the policy. The deeper technical detail lives in our published [GDPR compliance documentation](/trust/gdpr), [Privacy overview](/privacy/overview) and [Data handling](/privacy/data-handling), which this policy incorporates by reference.
 
 ## 1. Who is responsible
 
@@ -17,75 +17,104 @@ This page is the policy. The deeper technical detail lives in our published [GDP
 | --- | --- |
 | Controller | Galaxyhub Labs Inc. (d/b/a Voight), a Delaware (USA) corporation |
 | GDPR main establishment | Spain (Article 4(16)) |
-| Supervisory authority | [AEPD — Agencia Española de Protección de Datos](https://www.aepd.es) |
+| Supervisory authority | [AEPD, Agencia Española de Protección de Datos](https://www.aepd.es) |
 | Privacy contact | `team@voight.xyz` |
 
-For **account data** (your email, wallet address, billing records) Voight acts as a **data controller**. For **telemetry your applications send us** (events, traces), Voight acts as a **processor on your behalf** — you decide what is captured, via the SDK's [privacy levels](/privacy/overview).
+For **account data** (your email or wallet address, billing and credit records, your agents' conversations) Voight acts as a **data controller**. For **telemetry your applications send us** (events, traces), Voight acts as a **processor on your behalf**: you decide what is captured, via the SDK's [privacy levels](/privacy/overview).
 
 ## 2. What we collect
 
-**Account data** — when you sign up through our authentication provider, [Privy](https://privy.io):
+**Account data.**
 
-- Email address and/or wallet address, and the Privy account identifier
-- An embedded Solana wallet address may be created for your account
-- Plan, subscription status, and billing records when you pay for the Service
+- On the web, you sign up through our authentication provider, [Privy](https://privy.io): your email address and/or wallet address, the Privy account identifier, and an embedded Solana wallet address that may be created for your account.
+- In **Voight OS** there is no email, password or account form. The app asks the Seeker's Seed Vault to sign a one-time message; we keep your Solana public key, that signature, and a session token the app stores in the phone's secure storage. The wallet is the account.
+- Plan, subscription status, prepaid credit balance and billing records when you pay for the Service.
 
-**Telemetry** — what your SDKs send, which depends entirely on the capture level you pick (Minimal / Standard / Full). The field-by-field breakdown is in the [Privacy overview](/privacy/overview). At Minimal, no prompts, file paths, or content leave your machine at all; at Standard, content is PII-scrubbed locally before transmission.
+**Telemetry.** What your SDKs send, which depends entirely on the capture level you pick (Minimal / Standard / Full). The field-by-field breakdown is in the [Privacy overview](/privacy/overview). At Minimal, no prompts, file paths or content leave your machine at all; at Standard, content is PII-scrubbed locally before transmission.
 
-**Service configuration** — settings you create in the dashboard: agents, alert rules, and notification channels. If you connect Slack, we store the webhook URL Slack issues for the channel you picked; it is write-only in our API (always returned masked) and used solely to deliver the alerts you configured.
+**Your agents (Voight Agents and Voight OS).** The names, personas and settings of the agents you deploy or connect, your messages to them and their replies, the tasks and schedules you give them, their runs and traces, the approvals you sign on the Seeker, and the usage we meter (tokens, model, cost, GPU hours). If you connect a channel to an agent (Telegram, X, LinkedIn, GitHub, Slack), we store the token that channel issues in Google Secret Manager and use it only to run that agent on that channel.
 
-**Usage metrics** — event counts and agent counts per billing month, used for plan limits and shown to you in Settings.
+**Credit and payments (Voight OS).** Your credit account, each agent's score and line, statements, repayments, Market hires, Agent Registry and connection fees, Genesis Fund loans and cashback. For every payment we store the transaction signature, token and amount. We also read two public facts from the Solana blockchain to score your agents: whether your wallet holds a Seeker Genesis Token (its mint address) and how much SKR you have staked in Solana Mobile's staking program.
 
-**Payment data** — card payments are processed by Stripe; we never see or store full card numbers. Crypto payments are recorded on the Solana blockchain by their nature; we store the transaction reference needed to credit your account.
+**Service configuration.** Settings you create in the dashboard: alert rules and notification channels. If you connect Slack, we store the webhook URL Slack issues for the channel you picked; it is write-only in our API (always returned masked) and used solely to deliver the alerts you configured.
 
-We do **not** collect advertising identifiers, run third-party analytics trackers, or buy data about you from anyone.
+**Usage metrics.** Event counts, agent counts and metered inference per billing period, used for plan limits and credits and shown to you in Settings.
+
+**Payment data.** Card payments are processed by Stripe; we never see or store full card numbers. Payments in SKR, SOL, USDC or ORE are recorded on the Solana blockchain by their nature; we store the transaction reference needed to credit or settle your account.
+
+**Server logs.** IP address, request path and timing, kept for security and debugging.
+
+We do **not** collect advertising identifiers, run third-party analytics trackers, or buy data about you from anyone. The Voight OS app has no analytics or advertising SDK and does not read your contacts, location, photos, files or other apps. It does not use the camera or microphone (an earlier build listed camera and Wi-Fi permissions in its manifest that it never requested; they are removed from version 0.4).
 
 ## 3. Why we process it, and on what basis
 
-We process personal data to provide the Service under our contract with you (GDPR **Article 6(1)(b)**): operating the dashboard, ingesting and displaying your telemetry, delivering the alerts you configure, metering usage against plan limits, billing, and support. That is our single lawful basis — no consent-fatigue banners, no behavioral profiling, no marketing lists.
+We process personal data to provide the Service under our contract with you (GDPR **Article 6(1)(b)**): operating the dashboard and the app, ingesting and displaying your telemetry, running your agents and their conversations, delivering the alerts you configure, metering usage against plan limits and credits, opening and settling credit, billing, and support.
 
-Personal data is **never sold** and never shared with advertisers.
+We rely on our **legitimate interests (Article 6(1)(f))** for security logging, preventing abuse and fraud, and managing credit risk (for example, pausing agents when a statement is late). We keep the records the law requires us to keep, such as invoices and payment ledgers (**Article 6(1)(c)**).
+
+Personal data is **never sold** and never shared with advertisers. There is no behavioral profiling for marketing and no marketing list.
 
 ## 4. Who else touches it
 
-We use a deliberately small set of sub-processors, each SOC 2 Type II attested with a published GDPR DPA:
+We use a deliberately small set of providers, each under its own data processing terms. The register with contractual detail is kept current in the [GDPR documentation](/trust/gdpr).
 
-| Sub-processor | Purpose |
+| Provider | Purpose |
 | --- | --- |
 | [Vercel](https://vercel.com) | Web hosting |
 | [Railway](https://railway.app) | API hosting and Postgres database (United States) |
-| [Privy](https://privy.io) | Authentication and embedded wallets |
+| [Google Cloud](https://cloud.google.com) | Runtime for deployed agents, their memory files and channel secrets (us-central1) |
+| [Privy](https://privy.io) | Authentication and embedded wallets on the web |
 | [Stripe](https://stripe.com) | Card payment processing (when you pay by card) |
+| [Z.ai](https://z.ai) and [OpenRouter](https://openrouter.ai) | The AI models that answer your agents and Voight's assistant. The content of a conversation is sent to the model provider to produce the reply |
+| [Nosana](https://nosana.com) | GPU hosts, only for agents you choose to run on your own GPU |
+| [Helius](https://helius.dev) and public Solana RPC nodes | Reading the blockchain and verifying payments |
+| [Jupiter](https://jup.ag) and [CoinGecko](https://coingecko.com) | Token prices only; no personal data |
 
-Integrations **you** choose to connect (such as Slack alert delivery) receive only the data needed for that integration — in Slack's case, the content of the alert notifications you configured.
-
-The full sub-processor register, with contractual detail, is Annex A of the [GDPR documentation](/trust/gdpr).
+Integrations **you** choose to connect (Slack alert delivery, a Telegram bot, an X, LinkedIn or GitHub account for an agent) receive only the data needed for that integration, under that service's own terms.
 
 ## 5. Where it lives, and for how long
 
-- Data is stored in Railway-hosted Postgres in the United States. Transfers from the EU are covered by the **2021 EU Standard Contractual Clauses**; the Transfer Impact Assessment is summarized in the GDPR documentation.
+- Account, credit and agent data are stored in Railway-hosted Postgres in the United States. Deployed agents run on Google Cloud in us-central1, where their memory files and channel secrets also live. Transfers from the EU are covered by the **2021 EU Standard Contractual Clauses**; the Transfer Impact Assessment is summarized in the GDPR documentation.
 - Telemetry retention follows your plan tier: **7 days (Free), 90 days (Pro), 1 year (Enterprise)**.
-- Account data is kept while your account exists and deleted or anonymized when you close it, except records we must keep (e.g. invoices, for tax law).
+- Your agents' conversations, runs and settings are kept while your account exists. Deleting an agent stops it and removes its runtime; its records stay in your account until you close it.
+- Credit records (statements, repayments, loans, payouts) are kept while your account exists and while anything is outstanding, and afterwards for as long as accounting law requires.
+- Server logs are kept for up to 30 days.
+- Account data is deleted or anonymized when you close your account, except records we must keep (for example invoices, for tax law).
 - Transport is TLS 1.2+; API keys are stored only as SHA-256 hashes; access controls are described in [Data handling](/privacy/data-handling) and the [SOC 2 readiness assessment](/trust/soc2-readiness).
 
-## 6. Your rights
+## 6. What is written on the blockchain
 
-If you are in the EU/EEA (and in many other jurisdictions), you have the rights of access, rectification, erasure, restriction, portability, and objection. Email `team@voight.xyz` **from the address tied to your account**, state the right you want to exercise, and we respond within 30 days. You can also complain to your supervisory authority — for Voight that is the AEPD (Spain).
+Voight OS and Voight Agents put some records on Solana. Everything there is **public, permanent, and linked to a wallet address**; neither you nor we can delete it.
 
-Most of it you can do yourself without asking: export your data, delete agents and their events, and revoke API keys, all from the dashboard.
+- **Your agent's identity.** When you register an agent in the Agent Registry we create a Metaplex asset carrying the agent's name and metadata.
+- **Your agent's credit score.** We write its score, level, on-time and late payment counts and the update time as attributes of that asset. If you close your account we stop updating them.
+- **Payments.** Repayments of statements and Genesis loans, Market hires, Agent Registry and connection fees, Genesis payouts and cashback are Solana transactions between your wallet and ours, with a memo naming the statement, hire or loan.
+- **What we read.** Your staked SKR and your Seeker Genesis Token are public on-chain facts; reading them creates nothing new on the chain.
 
-## 7. Cookies
+## 7. Your rights
 
-We use only **essential** cookies and local storage: the session tokens set by Privy to keep you signed in, and a first-party cookie (`voight_handle`) that lets the public site reflect your signed-in state. No advertising or cross-site tracking cookies, no third-party analytics cookies. Because everything is essential, there is no consent banner to click through — there is nothing to opt out of.
+If you are in the EU/EEA (and in many other jurisdictions), you have the rights of access, rectification, erasure, restriction, portability and objection. Email `team@voight.xyz` from the address tied to your account or, for a Voight OS account, with a message signed by your wallet; state the right you want to exercise, and we respond within 30 days. You can also complain to your supervisory authority; for Voight that is the AEPD (Spain).
 
-## 8. Children
+Erasure covers what we hold. Records already on the blockchain (Section 6) cannot be erased by anyone; we can stop writing new ones.
 
-The Service is built for professionals and requires users to be at least **16 years old**. We do not knowingly process children's data; if you believe a minor has created an account, email `team@voight.xyz` and we will delete it.
+Most of it you can do yourself without asking: export your data, delete agents and their events, revoke API keys and agent keys, all from the dashboard or the app.
 
-## 9. Changes to this policy
+## 8. Cookies and local storage
+
+On the web we use only **essential** cookies and local storage: the session tokens set by Privy to keep you signed in, and a first-party cookie (`voight_handle`) that lets the public site reflect your signed-in state. No advertising or cross-site tracking cookies, no third-party analytics cookies. Because everything is essential, there is no consent banner to click through; there is nothing to opt out of.
+
+The Voight OS app sets no cookies. It keeps your session token in the phone's secure storage, and a note of payments you have sent but not yet confirmed, so a payment is never made twice.
+
+## 9. Children
+
+The Service is built for professionals and requires users to be at least **16 years old**. Voight OS, and any credit, loan or payment feature anywhere in the Service, requires you to be at least **18**. We do not knowingly process children's data; if you believe a minor has created an account, email `team@voight.xyz` and we will delete it.
+
+## 10. Changes to this policy
 
 When this policy changes materially we will notify you by email or an in-product notice before the change takes effect. The version and effective date at the top of this page always identify the current policy; prior versions are preserved in the document's git history.
 
-## 10. Contact
+**Version 1.1** (October 2026) extends the policy to Voight Agents and Voight OS: wallet sign-in, agent conversations and the model providers that answer them, credit and payment records, what is written on the blockchain, the full provider list, and the age rule for credit features.
+
+## 11. Contact
 
 Privacy questions, data subject requests, or anything this page left unclear: `team@voight.xyz`. We acknowledge within 48 hours.
