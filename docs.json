@@ -104,6 +104,14 @@
               "trust/nist-ai-rmf",
               "trust/soc2-readiness"
             ]
+          },
+          {
+            "group": "Legal",
+            "pages": [
+              "legal/terms",
+              "legal/privacy",
+              "legal/copyright"
+            ]
           }
         ]
       },
