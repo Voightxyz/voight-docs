@@ -5,6 +5,10 @@ description: "What shipped, when."
 
 SDK releases follow [semver](https://semver.org/). Backend and dashboard ship continuously from `main` without version tags.
 
+## Week of 2026-11-08: five GPU markets on Nosana
+
+The GPU market picker in the deploy flow now offers five Nosana markets: **NVIDIA 3060, 3080, 5070, 3090 and 4090**. The 4090 is backed by Nosana's Premium market, which had idle hosts where the Community market had none. Every tile shows the number of GPUs free in that market right now, read from the market's on-chain queue. [Read the guide →](/agents/gpu-hosting)
+
 ## Week of 2026-08-30 — Codex verified through native OpenTelemetry, SDK 0.7.0
 
 Codex is a first-class target again, and this time on solid ground. Instead of fighting Codex Desktop's sandbox with a hooks plugin, Voight now speaks the protocol Codex itself ships: its native OpenTelemetry export, pointed at a new OTLP receiver (`POST /v1/otel/logs`). One config block, and every Codex session lands as a full trace. [Read the guide →](/sdk/codex)

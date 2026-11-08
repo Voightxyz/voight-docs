@@ -21,11 +21,15 @@ When you deploy an agent you choose **where it runs**. The default is **Voight C
 
 In the deploy flow, the **Hosting** step offers the two hosts. Pick **Nosana GPU** and a GPU market:
 
-| Market | Status |
-| --- | --- |
-| NVIDIA RTX 3060 | Live |
-| NVIDIA RTX 3090 | Coming soon |
-| NVIDIA RTX 4090 | Coming soon |
+| Market | VRAM | Status |
+| --- | --- | --- |
+| NVIDIA RTX 3060 | 12 GB | Live |
+| NVIDIA RTX 3080 | 10 GB | Live |
+| NVIDIA RTX 5070 | 12 GB | Live |
+| NVIDIA RTX 3090 | 24 GB | Live |
+| NVIDIA RTX 4090 | 24 GB | Live |
+
+Each market tile shows how many GPUs are free in that market right now, read from the market's queue on Solana. Pick one with free GPUs and the node claims your job within a minute or two; a market with none free can leave the job waiting until a node frees up.
 
 A GPU agent takes **a few minutes** to come up (the node claims the job, pulls the image, and loads the model) instead of the ~60 seconds of Voight Cloud. You'll see **Deploying** until the agent's gateway answers, then **Live**. Everything else works the same: chat, Telegram, GitHub, scheduled tasks, memory.
 
